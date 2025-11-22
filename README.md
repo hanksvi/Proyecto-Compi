@@ -23,13 +23,13 @@ StmtList ::= Stmt (NEWLINE Stmt )*
 
 Stmt ::= id '=' CExp
 
-| 'echo' '(' CExp ')'
+  | 'echo' '(' CExp ')'
 
-| 'if' CExp ':' NEWLINE INDENT Body ['else' ':' NEWLINE INDENT Body DEDENT] DEDENT
+  | 'if' CExp ':' NEWLINE INDENT Body ['else' ':' NEWLINE INDENT Body DEDENT] DEDENT
 
-| 'while' CExp ':' NEWLINE INDENT Body DEDENT
+  | 'while' CExp ':' NEWLINE INDENT Body DEDENT
 
-| 'return' [CExp]
+  | 'return' [CExp]
 
 CExp ::= Exp (('<' | '<=' | '==' | '>=' | '>') Exp)?
 
