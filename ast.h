@@ -17,7 +17,11 @@ enum BinaryOp {
     MUL_OP, 
     DIV_OP,
     POW_OP,
-    LE_OP
+    LS_OP,
+    LSEQ_OP,
+    GR_OP,
+    GREQ_OP,
+    EQ_OP
 };
 
 // Clase abstracta Exp
@@ -166,6 +170,7 @@ class Program{
 public:
     list<VarDec*> vdlist;
     list<FunDec*> fdlist;
+    Body* cuerpo;
     Program(){};
     ~Program(){};
     int accept(Visitor* visitor);
