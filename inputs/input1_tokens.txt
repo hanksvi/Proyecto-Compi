@@ -1,0 +1,18 @@
+Scanner
+
+TOKEN(VAR, "var")
+TOKEN(ID, "x")
+TOKEN(COMA, ",")
+TOKEN(ID, "y")
+TOKEN(COLON, ":")
+TOKEN(ID, "int")
+TOKEN(NEWLINE, "")
+TOKEN(ECHO, "echo")
+TOKEN(LPAREN, "(")
+TOKEN(ID, "x")
+TOKEN(RPAREN, ")")
+TOKEN(NEWLINE, "")
+TOKEN(END)
+
+Scanner exitoso
+

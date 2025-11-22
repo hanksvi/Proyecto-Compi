@@ -1,0 +1,12 @@
+Scanner
+
+TOKEN(ID, "fun")
+TOKEN(ID, "int")
+TOKEN(ID, "main")
+TOKEN(LPAREN, "(")
+TOKEN(RPAREN, ")")
+TOKEN(NEWLINE, "")
+TOKEN(INDENT, "")
+TOKEN(VAR, "var")
+TOKEN(ID, "int")
+TOKEN(ID, "i")
