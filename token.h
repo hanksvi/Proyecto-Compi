@@ -19,7 +19,6 @@ public:
         RPAREN,  // )
         SQRT,    // sqrt
         NUM,     // Número
-        ERR,     // Error
         ID,      // ID
         LS,   // <
         LSEQ, // <=
@@ -42,17 +41,17 @@ public:
         FALSE,
         COLON,
         ////////
-        ENDWHILE,
-        ENDIF,
-        THEN,
-        FUN,
-        ENDFUN,
-        SEMICOL,
-        PRINT,
-        LE,
-        DO,
+        //ENDWHILE,
+        //ENDIF,
+        //THEN,
+        //FUN,
+        //ENDFUN,
+        //SEMICOL,
+        //PRINT,
+        //LE,
+        //DO,
         END
-        
+        ERR,     // Error
 
     };
 
