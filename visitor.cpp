@@ -398,4 +398,177 @@ void PrintVisitor::imprimir(Program* programa) {
 ////////////////////////////////////////////////////////////////
 //EVALVisitor
 ////////////////////////////////////////////////////////////////
+unordered_map<string, int> variablesGlobales;
+unordered_map<string, int> variablesLocales;
 
+unordered_map<string, FunDec*> tablaDeFunciones;
+
+int valorRetorno = 0;
+bool hayRetorno = false;
+
+int EVALVisitor::visit(NumberExp* exp) {
+    return exp->value;
+}
+int EVALVisitor::visit(IdExp* exp) {
+    if (variablesLocales.count(exp->value)) {
+        return variablesLocales[exp->value];
+    } else if (variablesGlobales.count(exp->value)) {
+        return variablesGlobales[exp->value];
+    } else {
+        cerr << "Error: variable '" << exp->value << "' no declarada" << endl;
+        return 0;
+    }
+}
+int EVALVisitor::visit(BinaryExp* exp) {
+    int izq = exp->left->accept(this);
+    int der = exp->right->accept(this);
+    
+    switch (exp->op) {
+        case PLUS_OP:   return izq + der;
+        case MINUS_OP:  return izq - der;
+        case MUL_OP:    return izq * der;
+        case DIV_OP:    
+            if (der == 0) {
+                cerr << "Error: división por cero" << endl;
+                return 0;
+            }
+            return izq / der;
+        case LS_OP:     return izq < der ? 1 : 0;
+        case LSEQ_OP:   return izq <= der ? 1 : 0;
+        case GR_OP:     return izq > der ? 1 : 0;
+        case GREQ_OP:   return izq >= der ? 1 : 0;
+        case EQ_OP:     return izq == der ? 1 : 0;
+        default:        return 0;
+    }
+}
+
+int EVALVisitor::visit(AssignStm* stm) {
+    int valor = stm->e->accept(this);
+    
+    if (variablesLocales.count(stm->id)) {
+        variablesLocales[stm->id] = valor;
+    } else {
+        variablesGlobales[stm->id] = valor;
+    }
+    
+    return 0;
+}
+
+int EVALVisitor::visit(PrintStm* stm) {
+    int valor = stm->e->accept(this);
+    cout << valor << endl;
+    return 0;
+}
+int EVALVisitor::visit(IfStm* stm) {
+    int condicion = stm->condition->accept(this);
+    
+    if (condicion != 0) {
+        stm->then->accept(this);
+    } 
+    else if (stm->els) {
+        stm->els->accept(this);
+    }
+    
+    return 0;
+}
+int EVALVisitor::visit(WhileStm* stm) {
+    while (stm->condition->accept(this) != 0) {
+        stm->b->accept(this);
+        
+        if (hayRetorno) break;
+    }
+    
+    return 0;
+}
+int EVALVisitor::visit(VarDec* vd) {
+    for (const auto& var : vd->vars) {
+        if (variablesLocales.size() > 0) {
+            variablesLocales[var] = 0;
+        } else {
+            variablesGlobales[var] = 0;
+        }
+    }
+    
+    return 0;
+}
+int EVALVisitor::visit(Body* b) {
+    for (auto dec : b->declarations) {
+        dec->accept(this);
+    }
+    
+    for (auto stm : b->StmList) {
+        stm->accept(this);
+        
+        if (hayRetorno) break;
+    }
+    
+    return 0;
+}
+int EVALVisitor::visit(ReturnStm* stm) {
+    if (stm->e) {
+        valorRetorno = stm->e->accept(this);
+    } else {
+        valorRetorno = 0;
+    }
+    
+    hayRetorno = true;
+    
+    return valorRetorno;
+}
+int EVALVisitor::visit(FunDec* fd) {
+    tablaDeFunciones[fd->nombre] = fd;
+    return 0;
+}
+int EVALVisitor::visit(FcallExp* fcall) {
+    if (!tablaDeFunciones.count(fcall->nombre)) {
+        cerr << "Error: función '" << fcall->nombre << "' no definida" << endl;
+        return 0;
+    }
+    
+    FunDec* funcion = tablaDeFunciones[fcall->nombre];
+    
+    unordered_map<string, int> variablesAnteriores = variablesLocales;
+    variablesLocales.clear();
+    
+    for (size_t i = 0; i < fcall->argumentos.size(); i++) {
+        int valorArg = fcall->argumentos[i]->accept(this);
+        if (i < funcion->Pnombres.size()) {
+            variablesLocales[funcion->Pnombres[i]] = valorArg;
+        }
+    }
+    
+    hayRetorno = false;
+    funcion->cuerpo->accept(this);
+    
+    int resultado = valorRetorno;
+    
+    variablesLocales = variablesAnteriores;
+    hayRetorno = false;
+    
+    return resultado;
+}
+int EVALVisitor::visit(Program* p) {
+    for (auto vd : p->vdlist) {
+        vd->accept(this);
+    }
+    
+    for (auto fd : p->fdlist) {
+        fd->accept(this);
+    }
+    
+    p->cuerpo->accept(this);
+    
+    return 0;
+}
+void EVALVisitor::interprete(Program* programa) {
+    if (programa) {
+        variablesGlobales.clear();
+        variablesLocales.clear();
+        tablaDeFunciones.clear();
+        hayRetorno = false;
+        valorRetorno = 0;
+        
+   
+        programa->accept(this);
+    }
+}

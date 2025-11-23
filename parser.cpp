@@ -139,9 +139,12 @@ Body* Parser::parseBody(){
     }
     b->StmList.push_back(parseStm());
     while (match(Token::NEWLINE)) {
+        if(check(Token::ID) || check(Token::ECHO) || check(Token::RETURN) || check(Token::IF) || check(Token::WHILE)){
         b->StmList.push_back(parseStm());
+        }else{
+            break;
+        }
     }
-    
     return b;
 }
 
