@@ -67,4 +67,41 @@ public:
     int visit(FunDec* fd) override;
 };
 
+class PrintVisitor: public Visitor{
+public:
+    int visit(BinaryExp* exp) override;
+    int visit(NumberExp* exp) override;
+    int visit(IdExp* exp) override;
+    int visit(Program* p) override ;
+    int visit(PrintStm* stm) override;
+    int visit(AssignStm* stm) override;
+    int visit(WhileStm* stm) override;
+    int visit(IfStm* stm) override;
+    int visit(Body* body) override;
+    int visit(VarDec* vd) override;
+    int visit(FcallExp* fcall) override;
+    int visit(ReturnStm* r) override;
+    int visit(FunDec* fd) override;
+
+    void imprimir(Program* program)
+};
+
+class EVALVisitor: public Visitor{
+public:
+    int visit(BinaryExp* exp) override;
+    int visit(NumberExp* exp) override;
+    int visit(IdExp* exp) override;
+    int visit(Program* p) override ;
+    int visit(PrintStm* stm) override;
+    int visit(AssignStm* stm) override;
+    int visit(WhileStm* stm) override;
+    int visit(IfStm* stm) override;
+    int visit(Body* body) override;
+    int visit(VarDec* vd) override;
+    int visit(FcallExp* fcall) override;
+    int visit(ReturnStm* r) override;
+    int visit(FunDec* fd) override;
+    void interprete(Program* program)
+}
+
 #endif // VISITOR_H

@@ -97,7 +97,7 @@ Token* Scanner::nextToken() {
         else if (lexema=="echo") return new Token(Token::ECHO, input, first, current - first);
         else if (lexema=="if") return new Token(Token::IF, input, first, current - first);
         else if (lexema=="while") return new Token(Token::WHILE, input, first, current - first);
-        else if (lexema=="newline") return new Token(Token::NEWLINE, input, first, current - first);
+        //else if (lexema=="newline") return new Token(Token::NEWLINE, input, first, current - first);
         else if (lexema=="else") return new Token(Token::ELSE, input, first, current - first);
         else if (lexema=="var") return new Token(Token::VAR, input, first, current - first);
         else if (lexema=="true") return new Token(Token::TRUE, input, first, current - first);
