@@ -23,6 +23,17 @@ int IdExp::accept(Visitor* visitor) {
     return visitor->visit(this);
 }
 
+int IfExp::accept(Visitor* visitor) {
+    return visitor->visit(this);
+}
+
+int CastExp::accept(Visitor* visitor) {
+    return visitor->visit(this);
+}
+
+int StringExp::accept(Visitor* visitor) {
+    return visitor->visit(this);
+}
 
 int PrintStm::accept(Visitor* visitor) {
     return visitor->visit(this);
@@ -85,7 +96,7 @@ out << ".data\nprint_fmt: .string \"%ld \\n\""<<endl;
     for (auto dec : program->fdlist){
         dec->accept(this);
     }
-
+    program->cuerpo->accept(this);
     out << ".section .note.GNU-stack,\"\",@progbits"<<endl;
         return 0;
 }
@@ -243,6 +254,23 @@ int GenCodeVisitor::visit(FcallExp* exp) {
     return 0;
 }
 
+int GenCodeVisitor::visit(IfExp* exp){
+    
+    return 0;
+}
+
+int GenCodeVisitor::visit(CastExp* exp){
+
+    return 0;
+}
+
+
+int GenCodeVisitor::visit(StringExp* exp) {   
+    
+    return 0;
+}
+
+
 //////////////////////////////////////////////////////////
 //PrintVisitor
 //////////////////////////////////////////////////////////
@@ -259,8 +287,26 @@ int PrintVisitor::visit(IdExp* exp) {
     return 0;
 }
 
+int PrintVisitor::visit(StringExp* exp) {   
+    cout << exp->value;
+    return 0;
+}
 
+int PrintVisitor::visit(IfExp* exp){
+    cout<<"if ";
+    exp->condicion->accept(this);
+    cout<<": ";
+    exp->then->accept(this);
+    cout<<" else: ";
+    exp->els->accept(this);
+    return 0;
+}
 
+int PrintVisitor::visit(CastExp* exp){
+    exp->e->accept(this);
+    cout<<"."<<exp->tipo; 
+    return 0;
+}
 int PrintVisitor::visit(BinaryExp* exp) {
     
     exp->left->accept(this);

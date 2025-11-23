@@ -1,11 +1,4 @@
-var x, y: int
-var mensaje : string
-proc suma(x :int, y:int): int =
-    if x:
-        if y:
-            echo(y)
-        echo(x)
-    return x + y
-var n: int
-n = x - y
-n = suma(x,y)
+var x: int
+
+x = 100
+echo(if x > 50: "grande" else: "pequeño")

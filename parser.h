@@ -21,6 +21,7 @@ public:
     VarDec* parseVarDec();
     Stm* parseStm();
     Exp* parseCE();
+    Exp* parseIf();
     Exp* parseBE();
     Exp* parseE();
     Exp* parseT();

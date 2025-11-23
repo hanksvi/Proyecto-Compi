@@ -28,3 +28,4 @@ No se encontraron errores de tipos
 Resultado del programa (EVAL): 0
 
 === STDERR ===
+free(): invalid pointer

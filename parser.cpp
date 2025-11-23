@@ -64,23 +64,23 @@ bool Parser::isAtEnd() {
 
 Program* Parser::parseProgram() {
     Program* p = new Program();
-    
+    skipEmptyLines();
     if(check(Token::VAR)) {
         p->vdlist.push_back(parseVarDec());
         while(match(Token::NEWLINE)) {
+            skipEmptyLines();
             if(check(Token::VAR)) {
                 p->vdlist.push_back(parseVarDec());
             }
         }
     }
-    
+    skipEmptyLines();
     if(check(Token::PROC)) {
         p->fdlist.push_back(parseFunDec());
         while(check(Token::PROC)){
                 p->fdlist.push_back(parseFunDec());
             }
         }
-
     skipEmptyLines();
     p->cuerpo = parseBody();
 
@@ -150,8 +150,9 @@ Body* Parser::parseBody() {
     // --- Declaraciones ---
     if (check(Token::VAR)) {
         b->declarations.push_back(parseVarDec());
-        while (match(Token::NEWLINE)) {
-            if (check(Token::VAR)) {
+        while(match(Token::NEWLINE)) {
+            skipEmptyLines();
+            if(check(Token::VAR)) {
                 b->declarations.push_back(parseVarDec());
             } else {
                 break;
@@ -167,19 +168,15 @@ Body* Parser::parseBody() {
         throw runtime_error("Error sintáctico: se esperaba una sentencia en el cuerpo");
     }
     b->StmList.push_back(parseStm());
-
-    // --- Más statements, permitiendo líneas en blanco entre ellos ---
-    while (true) {
-        // comer NEWLINE(s) entre statements
+    
+    while (match(Token::NEWLINE) || previous->type == Token::DEDENT) {
         skipEmptyLines();
-
-        if (check(Token::ID) || check(Token::ECHO) ||
-            check(Token::IF) || check(Token::WHILE) ||
-            check(Token::RETURN)) {
-
-            b->StmList.push_back(parseStm());
-        } else {
-            // si viene DEDENT, END, PROC, VAR, etc., termina el body
+        if(check(Token::ID) || check(Token::ECHO) || check(Token::IF) || check(Token::WHILE)
+         || check(Token::RETURN)) {
+        
+        b->StmList.push_back(parseStm());
+        }
+        else {
             break;
         }
     }
@@ -271,40 +268,58 @@ Stm* Parser::parseStm() {
 }
 
 Exp* Parser::parseCE() {
-    Exp* l = parseBE();
+    Exp* l = parseIf();
     if (match(Token::LS)) {
         BinaryOp op = LS_OP;
-        Exp* r = parseBE();
+        Exp* r = parseIf();
         l = new BinaryExp(l, r, op);
     }
     else if(match(Token::LSEQ)) {
         BinaryOp op = LSEQ_OP;
-        Exp* r = parseBE();
+        Exp* r = parseIf();
         l = new BinaryExp(l, r, op);
     }
     else if(match(Token::GR)) {
         BinaryOp op = GR_OP;
-        Exp* r = parseBE();
+        Exp* r = parseIf();
         l = new BinaryExp(l, r, op);
     }
     else if(match(Token::GREQ)) {
         BinaryOp op = GREQ_OP;
-        Exp* r = parseBE();
+        Exp* r = parseIf();
         l = new BinaryExp(l, r, op);
     }
     else if(match(Token::EQ)) {
         BinaryOp op = EQ_OP;
-        Exp* r = parseBE();
+        Exp* r = parseIf();
         l = new BinaryExp(l, r, op);
     }
 
     return l;
 }
 
-
+Exp* Parser::parseIf(){
+    Exp* then;
+    Exp* e1;
+    Exp* e2;
+    if(check(Token::IF)){
+        match(Token::IF);
+        then = parseCE();
+        match(Token::COLON);
+        e1 = parseBE();
+        match(Token::ELSE);
+        match(Token::COLON);
+        e2 = parseBE();
+        return new IfExp(then,e1,e2);
+    }
+    else{
+        return parseBE();
+    }
+}
 
 Exp* Parser::parseBE() {
     Exp* l = parseE();
+    
     while (match(Token::PLUS) || match(Token::MINUS)) {
         BinaryOp op;
         if (previous->type == Token::PLUS){
@@ -351,7 +366,15 @@ Exp* Parser::parseF() {
     Exp* e;
     string nom;
     if (match(Token::NUM)) {
+
         return new NumberExp(stoi(previous->text));
+    }
+    else if(match(Token::FLOAT)){
+        cout<<stod(previous->text)<<endl;
+        return new NumberExp(stod(previous->text));
+    }
+    else if (match(Token::STRING)) {
+        return new StringExp(previous->text);
     }
     else if (match(Token::TRUE)) {
         return new NumberExp(1);
@@ -367,10 +390,13 @@ Exp* Parser::parseF() {
     }
     else if (match(Token::ID)) {
         nom = previous->text;
+        
+
         if(check(Token::LPAREN)) {
             match(Token::LPAREN);
             FcallExp* fcall = new FcallExp();
             fcall->nombre = nom;
+            
             if (!check(Token::RPAREN)) {
                 fcall->argumentos.push_back(parseCE());
                 while(match(Token::COMA)) {
@@ -378,7 +404,17 @@ Exp* Parser::parseF() {
                 }
             }
             match(Token::RPAREN);
+            if(match(Token::POINT)){
+                
+                match(Token::ID);
+                return new CastExp(previous->text, fcall);    
+            }
             return fcall;
+        }
+        else if(match(Token::POINT)){
+            match(Token::ID);
+            Exp* a = new IdExp(nom);
+            return new CastExp(previous->text, a);
         }
         else {
             return new IdExp(nom);

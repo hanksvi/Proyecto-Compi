@@ -36,7 +36,8 @@ BinaryExp::~BinaryExp() {
 
 
 // ------------------ NumberExp ------------------
-NumberExp::NumberExp(int v) : value(v) {}
+NumberExp::NumberExp(int v) : value(v), isFloat(false){}
+NumberExp::NumberExp(double v) : value(v), isFloat(true) {}
 
 NumberExp::~NumberExp() {}
 
