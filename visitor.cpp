@@ -31,6 +31,10 @@ int CastExp::accept(Visitor* visitor) {
     return visitor->visit(this);
 }
 
+int StringExp::accept(Visitor* visitor) {
+    return visitor->visit(this);
+}
+
 int PrintStm::accept(Visitor* visitor) {
     return visitor->visit(this);
 }
@@ -260,6 +264,13 @@ int GenCodeVisitor::visit(CastExp* exp){
     return 0;
 }
 
+
+int GenCodeVisitor::visit(StringExp* exp) {   
+    
+    return 0;
+}
+
+
 //////////////////////////////////////////////////////////
 //PrintVisitor
 //////////////////////////////////////////////////////////
@@ -275,8 +286,14 @@ int PrintVisitor::visit(IdExp* exp) {
     cout << exp->value;
     return 0;
 }
+
+int PrintVisitor::visit(StringExp* exp) {   
+    cout << exp->value;
+    return 0;
+}
+
 int PrintVisitor::visit(IfExp* exp){
-    cout<<"if";
+    cout<<"if ";
     exp->condicion->accept(this);
     cout<<": ";
     exp->then->accept(this);

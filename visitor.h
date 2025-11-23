@@ -21,7 +21,7 @@ class ReturnStm;
 class FunDec;
 class IfExp;
 class CastExp;
-
+class StringExp;
 class Visitor {
 public:
     // 
@@ -30,6 +30,7 @@ public:
     virtual int visit(IdExp* exp) = 0;
     virtual int visit(IfExp* exp) = 0;
     virtual int visit(CastExp* exp) = 0;
+    virtual int visit(StringExp* exp) = 0;
     virtual int visit(Program* p) = 0;
     virtual int visit(PrintStm* stm) = 0;
     virtual int visit(WhileStm* stm) = 0;
@@ -60,6 +61,7 @@ public:
     int visit(IdExp* exp) override;
     int visit(IfExp* exp) override;
     int visit(CastExp* exp) override;
+    int visit(StringExp* exp) override;
     int visit(Program* p) override ;
     int visit(PrintStm* stm) override;
     int visit(AssignStm* stm) override;
@@ -85,6 +87,7 @@ public:
     int visit(NumberExp* exp) override;
     int visit(IdExp* exp) override;
     int visit(IfExp* exp) override;
+    int visit(StringExp* exp) override;
     int visit(CastExp* exp) override;
     int visit(Program* p) override ;
     int visit(PrintStm* stm) override;
@@ -105,6 +108,7 @@ public:
     int visit(BinaryExp* exp) override;
     int visit(NumberExp* exp) override;
     int visit(IdExp* exp) override;
+    int visit(StringExp* exp) override;
     int visit(Program* p) override ;
     int visit(PrintStm* stm) override;
     int visit(AssignStm* stm) override;

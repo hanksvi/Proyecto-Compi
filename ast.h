@@ -47,9 +47,11 @@ public:
 // Expresión numérica
 class NumberExp : public Exp {
 public:
-    int value;
+    double value;
+    bool isFloat;
     int accept(Visitor* visitor);
     NumberExp(int v);
+    NumberExp(double v);
     ~NumberExp();
 };
 
@@ -60,6 +62,15 @@ public:
     int accept(Visitor* visitor);
     IdExp(string v);
     ~IdExp();
+};
+
+class StringExp : public Exp {
+public:
+    string value;
+    
+    StringExp(string v) : value(v) {}
+    int accept(Visitor* visitor);
+    ~StringExp() {}
 };
 
 class IfExp: public Exp {

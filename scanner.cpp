@@ -85,7 +85,34 @@ Token* Scanner::nextToken() {
         current++;
         while (current < input.length() && isdigit(input[current]))
             current++;
-        token = new Token(Token::NUM, input, first, current - first);
+        
+        if(input[current] == '.' && isdigit(input[current + 1])){
+            current++;
+            while (current < input.length() && isdigit(input[current]))
+                current++;
+            token = new Token(Token::FLOAT, input, first, current - first);
+        }
+        else{
+            token = new Token(Token::NUM, input, first, current - first);
+        }
+        
+    }
+
+    // STRING
+    else if(c == '"'){
+        first = current;
+        current++;
+        string str = "";
+        
+        while(current < input.length() && input[current] != '"'){
+            str += input[current];
+            current++;
+        }
+        if(current >= input.length()){
+            return new Token(Token::ERR, input, first, current - first);
+        }
+        current++;
+        return new Token(Token::STRING, input, first, current-first);
     }
     // ID
     else if (isalpha(c)) {

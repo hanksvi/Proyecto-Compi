@@ -1,4 +1,11 @@
 === STDOUT ===
-casteoTOKEN(NEWLINE, "")casteoTOKEN(PLUS, "+")
+Parseo exitoso
+
+=== Iniciando impresión del programa ===
+var x: int
+x=100
+echo(ifx > 50: "grande" else: "pequeño")
+
+=== Generando codigo ensamblador en inputs/input1.s ===
+
 === STDERR ===
-Error al parsear: Error sintáctico: program

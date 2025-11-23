@@ -298,7 +298,7 @@ Exp* Parser::parseIf(){
 
 Exp* Parser::parseBE() {
     Exp* l = parseE();
-    cout<<"casteo"<<current;
+    
     while (match(Token::PLUS) || match(Token::MINUS)) {
         BinaryOp op;
         if (previous->type == Token::PLUS){
@@ -345,7 +345,15 @@ Exp* Parser::parseF() {
     Exp* e;
     string nom;
     if (match(Token::NUM)) {
+
         return new NumberExp(stoi(previous->text));
+    }
+    else if(match(Token::FLOAT)){
+        cout<<stod(previous->text)<<endl;
+        return new NumberExp(stod(previous->text));
+    }
+    else if (match(Token::STRING)) {
+        return new StringExp(previous->text);
     }
     else if (match(Token::TRUE)) {
         return new NumberExp(1);

@@ -42,6 +42,8 @@ public:
         TRUE,
         FALSE,
         COLON,
+        FLOAT, // 2.4
+        STRING,
         ////////
         ENDWHILE,
         ENDIF,
@@ -64,6 +66,7 @@ public:
     // Constructores
     Token(Type type);
     Token(Type type, char c);
+    Token(Type type, string c);
     Token(Type type, const string& source, int first, int last);
 
     // Sobrecarga de operadores de salida
