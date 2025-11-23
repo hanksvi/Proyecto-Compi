@@ -10,6 +10,7 @@ private:
     Token *current, *previous; // Punteros al token actual y al anterior
     bool match(Token::Type ttype);   // Verifica si el token actual coincide con un tipo esperado y avanza si es así
     bool check(Token::Type ttype);   // Comprueba si el token actual es de cierto tipo, sin avanzar
+    void skipEmptyLines();           // Salta líneas vacías
     bool advance();                  // Avanza al siguiente token
     bool isAtEnd();                  // Comprueba si ya se llegó al final de la entrada
 public:
