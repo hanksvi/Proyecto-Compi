@@ -64,23 +64,24 @@ bool Parser::isAtEnd() {
 
 Program* Parser::parseProgram() {
     Program* p = new Program();
-    
+    skipEmptyLines();
     if(check(Token::VAR)) {
         p->vdlist.push_back(parseVarDec());
         while(match(Token::NEWLINE)) {
+            skipEmptyLines();
             if(check(Token::VAR)) {
                 p->vdlist.push_back(parseVarDec());
             }
         }
     }
-    
+    skipEmptyLines();
     if(check(Token::PROC)) {
         p->fdlist.push_back(parseFunDec());
         while(check(Token::PROC)){
                 p->fdlist.push_back(parseFunDec());
             }
         }
-    
+    skipEmptyLines();
     p->cuerpo = parseBody();
 
     if (!isAtEnd()) {
@@ -146,6 +147,7 @@ Body* Parser::parseBody(){
     if(check(Token::VAR)) {
         b->declarations.push_back(parseVarDec());
         while(match(Token::NEWLINE)) {
+            skipEmptyLines();
             if(check(Token::VAR)) {
                 b->declarations.push_back(parseVarDec());
             }
@@ -154,8 +156,10 @@ Body* Parser::parseBody(){
     b->StmList.push_back(parseStm());
     
     while (match(Token::NEWLINE) || previous->type == Token::DEDENT) {
+        skipEmptyLines();
         if(check(Token::ID) || check(Token::ECHO) || check(Token::IF) || check(Token::WHILE)
          || check(Token::RETURN)) {
+        
         b->StmList.push_back(parseStm());
         }
         else {

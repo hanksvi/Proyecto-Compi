@@ -5,7 +5,9 @@ proc suma(x :int, y:int): int =
         if y:
             echo(y)
         echo(x)
-    return x + y
+    return (x + y)
+
+
 var n: int
 n = x - y
 n = suma(x,y)
