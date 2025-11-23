@@ -1,3 +1,24 @@
 === STDOUT ===
+Parseo exitoso
+
+=== Iniciando impresión del programa ===
+var res: int
+proc saludo(): int = 
+  echo(1)
+  echo(2)
+  return (0)
+proc procesar(a:int): int = 
+  var x: int
+  x=a * 10
+  echo(x)
+  return (x)
+proc main(): int = 
+  var v: int
+  v=procesar(3)
+  echo(v)
+  return (0)
+res=main()
+
+=== Generando codigo ensamblador en inputs/input6.s ===
 
 === STDERR ===

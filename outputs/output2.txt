@@ -1,3 +1,20 @@
 === STDOUT ===
+Parseo exitoso
+
+=== Iniciando impresión del programa ===
+var a,b: int
+var r: int
+proc mayor(x:int, y:int): int = 
+  if x > y: 
+    echo(x)
+    return (x)
+  else: 
+    echo(y)
+    return (y)
+a=15
+b=9
+r=mayor(a,b)
+
+=== Generando codigo ensamblador en inputs/input2.s ===
 
 === STDERR ===

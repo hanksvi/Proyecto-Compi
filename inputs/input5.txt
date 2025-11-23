@@ -1,8 +1,18 @@
-fun int id(int x)
-    return(x)
-endfun
+var a, b, c: int
 
-fun int main()
-    print(id(42));
-    return(0)
-endfun
+proc cuadrado(x:int): int =
+    return(x * x)
+
+proc suma(a:int, b:int): int =
+    return(a + b)
+
+proc operacion(x:int, y:int): int =
+    var m: int
+    m = cuadrado(x)
+    m = m + suma(x, y)
+    return(m)
+
+a = 3
+b = 4
+c = operacion(a, b)
+echo(c)

@@ -1,8 +1,20 @@
-fun int doble(int x)
-    return(x + x)
-endfun
+var res: int
 
-fun int main()
-    print(doble(21));
+proc saludo(): int =
+    echo(1)
+    echo(2)
     return(0)
-endfun
+
+proc procesar(a:int): int =
+    var x: int
+    x = a * 10
+    echo(x)
+    return(x)
+
+proc main(): int =
+    var v: int
+    v = procesar(3)
+    echo(v)
+    return(0)
+
+res = main()

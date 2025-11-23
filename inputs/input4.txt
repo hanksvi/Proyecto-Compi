@@ -1,9 +1,14 @@
-fun int main()
-    var int i;
-    i = 0;
-    while i < 3 do
-        print(i);
-        i = i + 1
-    endwhile
-    return(0)
-endfun
+var x, y: int
+var res: int
+
+x = 5
+y = 12
+
+if x < y:
+    echo(x)
+    res = y
+else:
+    echo(y)
+    res = x
+
+echo(res)
