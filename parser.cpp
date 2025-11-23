@@ -157,14 +157,13 @@ Body* Parser::parseBody() {
 
 
     b->StmList.push_back(parseStm());
-
-    while (match(Token::NEWLINE)) {
-        if (check(Token::ID) || check(Token::ECHO) ||
-            check(Token::IF) || check(Token::WHILE) ||
-            check(Token::RETURN)) {
-
-            b->StmList.push_back(parseStm());
-        } else {
+    
+    while (match(Token::NEWLINE) || previous->type == Token::DEDENT) {
+        if(check(Token::ID) || check(Token::ECHO) || check(Token::IF) || check(Token::WHILE)
+         || check(Token::RETURN)) {
+        b->StmList.push_back(parseStm());
+        }
+        else {
             break;
         }
     }
@@ -212,7 +211,8 @@ Stm* Parser::parseStm() {
             cout << "Error: se esperaba 'cierre de indentacion de if' después de la expresión." << endl;
             exit(1);
         }
-        if (match(Token::ELSE)) {
+        if (match(Token::ELSE)) 
+        {
             match(Token::COLON);
             match(Token::NEWLINE);
             if (!match(Token::INDENT)) {

@@ -1,18 +1,11 @@
 var x, y: int
-proc suma(a : int, b : int): int =
-    if a:
-        echo(a)
-    return(a + b)
-var n : int
-x = 5
-y = 10
-n = 4
-echo(suma(x, n))
-if x:
-    echo(y)
-    if y:
+var mensaje : string
+proc suma(x :int, y:int): int =
+    if x:
+        if y:
+            echo(y)
         echo(x)
-    else:
-        echo(x)
-else:
-    echo(y)
+    return x + y
+var n: int
+n = x - y
+n = suma(x,y)
