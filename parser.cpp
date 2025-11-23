@@ -140,32 +140,38 @@ FunDec *Parser::parseFunDec() {
 
 
 
-Body* Parser::parseBody(){
-    
+Body* Parser::parseBody() {
     Body* b = new Body();
-    if(check(Token::VAR)) {
+
+    // --- Declaraciones ---
+    if (check(Token::VAR)) {
         b->declarations.push_back(parseVarDec());
-        while(match(Token::NEWLINE)) {
-            if(check(Token::VAR)) {
+        while (match(Token::NEWLINE)) {
+            if (check(Token::VAR)) {
                 b->declarations.push_back(parseVarDec());
+            } else {
+                break;
             }
         }
     }
+
+
     b->StmList.push_back(parseStm());
+
     while (match(Token::NEWLINE)) {
-        if(check(Token::ID) || check(Token::ECHO) || check(Token::IF) || check(Token::WHILE)
-         || check(Token::RETURN)) {
-        b->StmList.push_back(parseStm());
-        }else{
-            break;
-        }
-        }
-        else {
+        if (check(Token::ID) || check(Token::ECHO) ||
+            check(Token::IF) || check(Token::WHILE) ||
+            check(Token::RETURN)) {
+
+            b->StmList.push_back(parseStm());
+        } else {
             break;
         }
     }
+
     return b;
 }
+
 
 Stm* Parser::parseStm() {
     Stm* a;
