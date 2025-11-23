@@ -11,6 +11,16 @@ proc main(): int =
   return (0)
 res=main()
 
-=== Generando codigo ensamblador en inputs/input3.s ===
+ Iniciando chequeo de tipos
+
+ Verificación de tipos
+No se encontraron errores de tipos
+ Chequeo de tipos exitoso
+
+ Generando codigo ensamblador en inputs/input3.s
+
+ Generando ejecutable 
+10
+Resultado del programa (EVAL): 0
 
 === STDERR ===

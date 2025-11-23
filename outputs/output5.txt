@@ -17,6 +17,19 @@ b=4
 c=operacion(a,b)
 echo(c)
 
-=== Generando codigo ensamblador en inputs/input5.s ===
+ Iniciando chequeo de tipos
+
+ Verificación de tipos
+No se encontraron errores de tipos
+ Chequeo de tipos exitoso
+
+ Generando codigo ensamblador en inputs/input5.s
+
+ Generando ejecutable 
+0
+Resultado del programa (EVAL): 0
 
 === STDERR ===
+Error: variable 'x' no declarada
+Error: variable 'x' no declarada
+Error: variable 'y' no declarada

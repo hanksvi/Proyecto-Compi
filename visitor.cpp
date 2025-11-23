@@ -576,3 +576,218 @@ void EVALVisitor::interprete(Program* programa) {
         programa->accept(this);
     }
 }
+
+
+//////////////////////////////////////////////////////////////
+//TYPECHECKERVISITOR
+//////////////////////////////////////////////////////////////
+
+unordered_map<string, FunDec*> tc_tablaFunciones;
+unordered_map<string, string> tc_tablaVariablesGlobales;
+unordered_map<string, string> tc_tablaVariablesLocales;
+unordered_map<string, int> tc_fun_locales;
+unordered_map<string, int> tc_var_locales;
+bool tc_hayErrores = false;
+
+int TypeCheckerVisitor::visit(NumberExp* exp) {
+    return 0; 
+}
+
+int TypeCheckerVisitor::visit(IdExp* exp) {
+    if (tc_tablaVariablesLocales.count(exp->value)) {
+        return 0; 
+    } else if (tc_tablaVariablesGlobales.count(exp->value)) {
+        return 0; 
+    } else {
+        cerr << "Error de tipo: variable '" << exp->value << "' no declarada" << endl;
+        tc_hayErrores = true;
+        return -1;
+    }
+}
+
+int TypeCheckerVisitor::visit(BinaryExp* exp) {
+
+    int izq = exp->left->accept(this);
+    int der = exp->right->accept(this);
+    
+    if (izq == -1 || der == -1) {
+        return -1; 
+    }
+    
+    return 0; 
+}
+
+int TypeCheckerVisitor::visit(AssignStm* stm) {
+    if (!tc_tablaVariablesLocales.count(stm->id) && !tc_tablaVariablesGlobales.count(stm->id)) {
+        cerr << "Error de tipo: variable '" << stm->id << "' no declarada en asignación" << endl;
+        tc_hayErrores = true;
+        return -1;
+    }
+    
+    int resultado = stm->e->accept(this);
+    
+    return resultado;
+}
+
+int TypeCheckerVisitor::visit(PrintStm* stm) {
+    return stm->e->accept(this);
+}
+
+int TypeCheckerVisitor::visit(IfStm* stm) {
+    int condicion = stm->condition->accept(this);
+    
+    int then_result = stm->then->accept(this);
+    
+    int else_result = 0;
+    if (stm->els) {
+        else_result = stm->els->accept(this);
+    }
+    
+    if (condicion == -1 || then_result == -1 || else_result == -1) {
+        return -1;
+    }
+    
+    return 0;
+}
+
+int TypeCheckerVisitor::visit(WhileStm* stm) {
+    int condicion = stm->condition->accept(this);
+    
+    int body_result = stm->b->accept(this);
+    
+    if (condicion == -1 || body_result == -1) {
+        return -1;
+    }
+    
+    return 0;
+}
+
+int TypeCheckerVisitor::visit(VarDec* vd) {
+    for (const auto& var : vd->vars) {
+        if (tc_var_locales.size() > 0 || tc_fun_locales.size() > 0) {
+            if (tc_tablaVariablesLocales.count(var)) {
+                cerr << "Error de tipo: variable local '" << var << "' ya declarada" << endl;
+                tc_hayErrores = true;
+            }
+            tc_tablaVariablesLocales[var] = vd->type;
+        } else {
+            if (tc_tablaVariablesGlobales.count(var)) {
+                cerr << "Error de tipo: variable global '" << var << "' ya declarada" << endl;
+                tc_hayErrores = true;
+            }
+            tc_tablaVariablesGlobales[var] = vd->type;
+        }
+    }
+    
+    return 0;
+}
+
+int TypeCheckerVisitor::visit(Body* body) {
+    for (auto dec : body->declarations) {
+        dec->accept(this);
+    }
+    
+    
+    for (auto stm : body->StmList) {
+        stm->accept(this);
+    }
+    
+    return 0;
+}
+
+int TypeCheckerVisitor::visit(ReturnStm* r) {
+    if (r->e) {
+        return r->e->accept(this);
+    }
+    
+    return 0;
+}
+
+int TypeCheckerVisitor::visit(FunDec* fd) {
+    if (tc_tablaFunciones.count(fd->nombre)) {
+        cerr << "Error de tipo: función '" << fd->nombre << "' ya declarada" << endl;
+        tc_hayErrores = true;
+        return -1;
+    }
+    
+    tc_tablaFunciones[fd->nombre] = fd;
+    tc_fun_locales[fd->nombre] = 1;
+    
+    unordered_map<string, string> variablesAnteriores = tc_tablaVariablesLocales;
+    tc_tablaVariablesLocales.clear();
+    
+    for (size_t i = 0; i < fd->Pnombres.size(); i++) {
+        tc_tablaVariablesLocales[fd->Pnombres[i]] = fd->Ptipos[i];
+        tc_var_locales[fd->Pnombres[i]] = 1;
+    }
+    
+    fd->cuerpo->accept(this);
+    
+    tc_tablaVariablesLocales = variablesAnteriores;
+    tc_var_locales.clear();
+    
+    return 0;
+}
+
+int TypeCheckerVisitor::visit(FcallExp* fcall) {
+    if (!tc_tablaFunciones.count(fcall->nombre)) {
+        cerr << "Error de tipo: función '" << fcall->nombre << "' no declarada" << endl;
+        tc_hayErrores = true;
+        return -1;
+    }
+    
+    FunDec* funcion = tc_tablaFunciones[fcall->nombre];
+    
+    if (fcall->argumentos.size() != funcion->Pnombres.size()) {
+        cerr << "Error de tipo: función '" << fcall->nombre << "' espera " 
+             << funcion->Pnombres.size() << " argumentos, pero se proporcionaron " 
+             << fcall->argumentos.size() << endl;
+        tc_hayErrores = true;
+        return -1;
+    }
+    
+    for (auto arg : fcall->argumentos) {
+        int resultado = arg->accept(this);
+        if (resultado == -1) {
+            return -1;
+        }
+    }
+    
+    return 0;
+}
+
+int TypeCheckerVisitor::visit(Program* p) {
+    for (auto vd : p->vdlist) {
+        vd->accept(this);
+    }
+    
+    for (auto fd : p->fdlist) {
+        fd->accept(this);
+    }
+    
+    p->cuerpo->accept(this);
+    
+    return 0;
+}
+
+void TypeCheckerVisitor::check(Program* program) {
+    if (program) {
+        tc_tablaFunciones.clear();
+        tc_tablaVariablesGlobales.clear();
+        tc_tablaVariablesLocales.clear();
+        tc_fun_locales.clear();
+        tc_var_locales.clear();
+        tc_hayErrores = false;
+        
+        cout << "\n Verificación de tipos" << endl;
+        
+        program->accept(this);
+        
+        if (!tc_hayErrores) {
+            cout << "No se encontraron errores de tipos" << endl;
+        } else {
+            cout << "Se encontraron errores de tipos" << endl;
+        }
+    }
+}
+

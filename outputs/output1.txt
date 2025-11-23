@@ -14,6 +14,15 @@ var n: int
 n=x - y
 n=suma(x,y)
 
-=== Generando codigo ensamblador en inputs/input1.s ===
+ Iniciando chequeo de tipos
+
+ Verificación de tipos
+No se encontraron errores de tipos
+ Chequeo de tipos exitoso
+
+ Generando codigo ensamblador en inputs/input1.s
+
+ Generando ejecutable 
+Resultado del programa (EVAL): 0
 
 === STDERR ===
