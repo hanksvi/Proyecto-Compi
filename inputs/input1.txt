@@ -1,3 +1,18 @@
 var x, y: int
-x = 2
-echo(x)
+proc suma(a : int, b : int): int =
+    if a:
+        echo(a)
+    return(a + b)
+var n : int
+x = 5
+y = 10
+n = 4
+echo(suma(x, n))
+if x:
+    echo(y)
+    if y:
+        echo(x)
+    else:
+        echo(x)
+else:
+    echo(y)

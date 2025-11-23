@@ -18,6 +18,13 @@ Parser::Parser(Scanner* sc) : scanner(sc) {
     }
 }
 
+// Quitar todos las lineas vacias
+void Parser::skipEmptyLines() {
+    while(check(Token::NEWLINE)) {
+        advance();
+    }
+}
+
 bool Parser::match(Token::Type ttype) {
     if (check(ttype)) {
         advance();
@@ -57,6 +64,7 @@ bool Parser::isAtEnd() {
 
 Program* Parser::parseProgram() {
     Program* p = new Program();
+    
     if(check(Token::VAR)) {
         p->vdlist.push_back(parseVarDec());
         while(match(Token::NEWLINE)) {
@@ -65,17 +73,18 @@ Program* Parser::parseProgram() {
             }
         }
     }
+    
     if(check(Token::PROC)) {
         p->fdlist.push_back(parseFunDec());
         while(check(Token::PROC)){
                 p->fdlist.push_back(parseFunDec());
             }
         }
-
+    
     p->cuerpo = parseBody();
 
     if (!isAtEnd()) {
-        throw runtime_error("Error sintáctico");
+        throw runtime_error("Error sintáctico: program");
     }
     
     cout << "Parseo exitoso" << endl;
@@ -104,12 +113,17 @@ FunDec *Parser::parseFunDec() {
     fd->nombre = previous->text;
     match(Token::LPAREN);
     if(check(Token::ID)) {
-        while(match(Token::ID)) {
+        match(Token::ID);
+        fd->Pnombres.push_back(previous->text);
+        match(Token::COLON);
+        match(Token::ID);
+        fd->Ptipos.push_back(previous->text);
+        while(match(Token::COMA)) {
+            match(Token::ID);
             fd->Pnombres.push_back(previous->text);
             match(Token::COLON);
             match(Token::ID);
             fd->Ptipos.push_back(previous->text);
-            match(Token::COMA);
         }
     }
     match(Token::RPAREN);
@@ -139,9 +153,14 @@ Body* Parser::parseBody(){
     }
     b->StmList.push_back(parseStm());
     while (match(Token::NEWLINE)) {
-        if(check(Token::ID) || check(Token::ECHO) || check(Token::RETURN) || check(Token::IF) || check(Token::WHILE)){
+        if(check(Token::ID) || check(Token::ECHO) || check(Token::IF) || check(Token::WHILE)
+         || check(Token::RETURN)) {
         b->StmList.push_back(parseStm());
         }else{
+            break;
+        }
+        }
+        else {
             break;
         }
     }
@@ -158,6 +177,7 @@ Stm* Parser::parseStm() {
         variable = previous->text;
         match(Token::ASSIGN);
         e = parseCE();
+        
         return new AssignStm(variable,e);
     }
     else if(match(Token::ECHO)){
@@ -178,26 +198,26 @@ Stm* Parser::parseStm() {
         match(Token:: COLON);
         match(Token::NEWLINE);
         if (!match(Token::INDENT)) {
-            cout << "Error: se esperaba 'identacion' después de la expresión." << endl;
+            cout << "Error: se esperaba 'identacion de if' después de la expresión." << endl;
             exit(1);
         }
         tb = parseBody();
+        if (!match(Token::DEDENT)) {
+            cout << "Error: se esperaba 'cierre de indentacion de if' después de la expresión." << endl;
+            exit(1);
+        }
         if (match(Token::ELSE)) {
             match(Token::COLON);
             match(Token::NEWLINE);
             if (!match(Token::INDENT)) {
-            cout << "Error: se esperaba 'indentacion' después de la expresión." << endl;
+            cout << "Error: se esperaba 'indentacion de else' después de la expresión." << endl;
             exit(1);
             }
             fb = parseBody();
             if (!match(Token::DEDENT)) {
-            cout << "Error: se esperaba 'cierre de indentacion' después de la expresión." << endl;
+            cout << "Error: se esperaba 'cierre de indentacion de else' después de la expresión." << endl;
             exit(1);
             }
-        }
-        if (!match(Token::DEDENT)) {
-            cout << "Error: se esperaba 'cierre de indentacion' después de la expresión." << endl;
-            exit(1);
         }
         a = new IfStm(e, tb, fb);
     }
@@ -217,7 +237,7 @@ Stm* Parser::parseStm() {
         a = new WhileStm(e, tb);
     }
     else{
-        throw runtime_error("Error sintácticossss");
+        throw runtime_error("Error sintáctico stm");
     }
     return a;
 }
@@ -335,6 +355,6 @@ Exp* Parser::parseF() {
             }
     }
     else {
-        throw runtime_error("Error sintácticosss");
+        throw runtime_error("Error sintáctico: parseF");
     }
 }
