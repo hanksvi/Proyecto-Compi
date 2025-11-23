@@ -179,8 +179,6 @@ Stm* Parser::parseStm() {
     if(match(Token::ID)){
         variable = previous->text;
         match(Token::ASSIGN);
-        
-
         e = parseCE();
         
         return new AssignStm(variable,e);
@@ -249,40 +247,58 @@ Stm* Parser::parseStm() {
 }
 
 Exp* Parser::parseCE() {
-    Exp* l = parseBE();
+    Exp* l = parseIf();
     if (match(Token::LS)) {
         BinaryOp op = LS_OP;
-        Exp* r = parseBE();
+        Exp* r = parseIf();
         l = new BinaryExp(l, r, op);
     }
     else if(match(Token::LSEQ)) {
         BinaryOp op = LSEQ_OP;
-        Exp* r = parseBE();
+        Exp* r = parseIf();
         l = new BinaryExp(l, r, op);
     }
     else if(match(Token::GR)) {
         BinaryOp op = GR_OP;
-        Exp* r = parseBE();
+        Exp* r = parseIf();
         l = new BinaryExp(l, r, op);
     }
     else if(match(Token::GREQ)) {
         BinaryOp op = GREQ_OP;
-        Exp* r = parseBE();
+        Exp* r = parseIf();
         l = new BinaryExp(l, r, op);
     }
     else if(match(Token::EQ)) {
         BinaryOp op = EQ_OP;
-        Exp* r = parseBE();
+        Exp* r = parseIf();
         l = new BinaryExp(l, r, op);
     }
 
     return l;
 }
 
-
+Exp* Parser::parseIf(){
+    Exp* then;
+    Exp* e1;
+    Exp* e2;
+    if(check(Token::IF)){
+        match(Token::IF);
+        then = parseCE();
+        match(Token::COLON);
+        e1 = parseBE();
+        match(Token::ELSE);
+        match(Token::COLON);
+        e2 = parseBE();
+        return new IfExp(then,e1,e2);
+    }
+    else{
+        return parseBE();
+    }
+}
 
 Exp* Parser::parseBE() {
     Exp* l = parseE();
+    cout<<"casteo"<<current;
     while (match(Token::PLUS) || match(Token::MINUS)) {
         BinaryOp op;
         if (previous->type == Token::PLUS){
@@ -346,6 +362,7 @@ Exp* Parser::parseF() {
     else if (match(Token::ID)) {
         nom = previous->text;
         
+
         if(check(Token::LPAREN)) {
             match(Token::LPAREN);
             FcallExp* fcall = new FcallExp();
@@ -357,9 +374,18 @@ Exp* Parser::parseF() {
                     fcall->argumentos.push_back(parseCE());
                 }
             }
-            
             match(Token::RPAREN);
+            if(match(Token::POINT)){
+                
+                match(Token::ID);
+                return new CastExp(previous->text, fcall);    
+            }
             return fcall;
+        }
+        else if(match(Token::POINT)){
+            match(Token::ID);
+            Exp* a = new IdExp(nom);
+            return new CastExp(previous->text, a);
         }
         else {
             return new IdExp(nom);

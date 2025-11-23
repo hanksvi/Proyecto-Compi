@@ -32,6 +32,7 @@ public:
         ECHO,  // echo = print
         IF, // if
         WHILE,  //while
+        POINT, // .
         NEWLINE,
         INDENT,
         DEDENT,

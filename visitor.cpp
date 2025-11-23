@@ -23,6 +23,13 @@ int IdExp::accept(Visitor* visitor) {
     return visitor->visit(this);
 }
 
+int IfExp::accept(Visitor* visitor) {
+    return visitor->visit(this);
+}
+
+int CastExp::accept(Visitor* visitor) {
+    return visitor->visit(this);
+}
 
 int PrintStm::accept(Visitor* visitor) {
     return visitor->visit(this);
@@ -243,6 +250,16 @@ int GenCodeVisitor::visit(FcallExp* exp) {
     return 0;
 }
 
+int GenCodeVisitor::visit(IfExp* exp){
+    
+    return 0;
+}
+
+int GenCodeVisitor::visit(CastExp* exp){
+
+    return 0;
+}
+
 //////////////////////////////////////////////////////////
 //PrintVisitor
 //////////////////////////////////////////////////////////
@@ -258,9 +275,21 @@ int PrintVisitor::visit(IdExp* exp) {
     cout << exp->value;
     return 0;
 }
+int PrintVisitor::visit(IfExp* exp){
+    cout<<"if";
+    exp->condicion->accept(this);
+    cout<<": ";
+    exp->then->accept(this);
+    cout<<" else: ";
+    exp->els->accept(this);
+    return 0;
+}
 
-
-
+int PrintVisitor::visit(CastExp* exp){
+    exp->e->accept(this);
+    cout<<"."<<exp->tipo; 
+    return 0;
+}
 int PrintVisitor::visit(BinaryExp* exp) {
     
     exp->left->accept(this);

@@ -1,14 +1,6 @@
-var x, y: int
-var res: int
+var x: int
+var y: float
 
-x = 5
-y = 12
-
-if x < y:
-    echo(x)
-    res = y
-else:
-    echo(y)
-    res = x
-
-echo(res)
+x = 10
+y = x.float + 2.5
+echo(y)

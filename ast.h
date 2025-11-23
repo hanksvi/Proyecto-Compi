@@ -62,6 +62,24 @@ public:
     ~IdExp();
 };
 
+class IfExp: public Exp {
+public:
+    Exp* condicion;
+    Exp* then;
+    Exp* els;
+    IfExp(Exp* condicion, Exp* then, Exp* els) : condicion(condicion), then(then), els(els) {};
+    int accept(Visitor* visitor);
+    ~IfExp(){};
+};
+
+class CastExp: public Exp {
+public:
+    string tipo;
+    Exp* e;
+    CastExp(string tipo, Exp* exp): tipo(tipo), e(exp){};
+    int accept(Visitor* visitor);
+    ~CastExp(){};
+};
 
 class Stm{
 public:
