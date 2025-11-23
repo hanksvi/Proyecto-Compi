@@ -3,16 +3,16 @@ Parseo exitoso
 
 === Iniciando impresión del programa ===
 var x,y: int
-var mensaje: string
-proc suma(x:int, y:int): int = 
-  if x: 
-    if y: 
-      echo(y)
-    echo(x)
-  return (x + y)
-var n: int
-n=x - y
-n=suma(x,y)
+var res: int
+x=5
+y=12
+if x < y: 
+  echo(x)
+  res=y
+else: 
+  echo(y)
+  res=x
+echo(res)
 
 === Generando codigo ensamblador en inputs/input1.s ===
 

@@ -85,7 +85,7 @@ out << ".data\nprint_fmt: .string \"%ld \\n\""<<endl;
     for (auto dec : program->fdlist){
         dec->accept(this);
     }
-
+    program->cuerpo->accept(this);
     out << ".section .note.GNU-stack,\"\",@progbits"<<endl;
         return 0;
 }
@@ -351,6 +351,10 @@ int PrintVisitor::visit(Body* b) {
 
 int PrintVisitor::visit(FcallExp* fcall) {
     cout << fcall-> nombre << "(";
+    if(fcall->argumentos.size()==0){
+        cout << ")";
+        return 0;
+    }
     fcall->argumentos[0]->accept(this);
     for (int i= 1; i<fcall->argumentos.size(); i++) {
         cout << ",";

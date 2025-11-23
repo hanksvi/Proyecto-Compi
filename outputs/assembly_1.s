@@ -1,46 +1,44 @@
 .data
 print_fmt: .string "%ld \n"
-mensaje: .quad 0
+res: .quad 0
 y: .quad 0
 x: .quad 0
 .text
-.globl suma
-suma:
- pushq %rbp
- movq %rsp, %rbp
- movq %rdi,-8(%rbp)
- movq %rsi,-16(%rbp)
- subq $16, %rsp
- movq x(%rip), %rax
- cmpq $0, %rax
- je else_0
- movq y(%rip), %rax
- cmpq $0, %rax
- je else_1
- movq y(%rip), %rax
- movq %rax, %rsi
- leaq print_fmt(%rip), %rdi
- movl $0, %eax
- call printf@PLT
- jmp endif_1
- else_1:
-endif_1:
- movq x(%rip), %rax
- movq %rax, %rsi
- leaq print_fmt(%rip), %rdi
- movl $0, %eax
- call printf@PLT
- jmp endif_0
- else_0:
-endif_0:
+ movq $5, %rax
+ movq %rax, x(%rip)
+ movq $12, %rax
+ movq %rax, y(%rip)
  movq x(%rip), %rax
  pushq %rax
  movq y(%rip), %rax
  movq %rax, %rcx
  popq %rax
- addq %rcx, %rax
- jmp .end_suma
-.end_suma:
-leave
-ret
+ cmpq %rcx, %rax
+ movl $0, %eax
+ setle %al
+ movzbq %al, %rax
+ cmpq $0, %rax
+ je else_0
+ movq x(%rip), %rax
+ movq %rax, %rsi
+ leaq print_fmt(%rip), %rdi
+ movl $0, %eax
+ call printf@PLT
+ movq y(%rip), %rax
+ movq %rax, res(%rip)
+ jmp endif_0
+ else_0:
+ movq y(%rip), %rax
+ movq %rax, %rsi
+ leaq print_fmt(%rip), %rdi
+ movl $0, %eax
+ call printf@PLT
+ movq x(%rip), %rax
+ movq %rax, res(%rip)
+endif_0:
+ movq res(%rip), %rax
+ movq %rax, %rsi
+ leaq print_fmt(%rip), %rdi
+ movl $0, %eax
+ call printf@PLT
 .section .note.GNU-stack,"",@progbits

@@ -179,6 +179,8 @@ Stm* Parser::parseStm() {
     if(match(Token::ID)){
         variable = previous->text;
         match(Token::ASSIGN);
+        
+
         e = parseCE();
         
         return new AssignStm(variable,e);
@@ -343,14 +345,19 @@ Exp* Parser::parseF() {
     }
     else if (match(Token::ID)) {
         nom = previous->text;
+        
         if(check(Token::LPAREN)) {
             match(Token::LPAREN);
             FcallExp* fcall = new FcallExp();
             fcall->nombre = nom;
-            fcall->argumentos.push_back(parseCE());
-            while(match(Token::COMA)) {
+            
+            if (!check(Token::RPAREN)) {
                 fcall->argumentos.push_back(parseCE());
+                while(match(Token::COMA)) {
+                    fcall->argumentos.push_back(parseCE());
+                }
             }
+            
             match(Token::RPAREN);
             return fcall;
         }
