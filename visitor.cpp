@@ -247,134 +247,145 @@ int GenCodeVisitor::visit(FcallExp* exp) {
 //PrintVisitor
 //////////////////////////////////////////////////////////
 
-int PrintVisitor::visit(NumberExp* exp){
-    cout<< exp->value;
+int PrintVisitor::visit(NumberExp* exp) {
+    
+    cout << exp->value;
     return 0;
 }
 
-int PrintVisitor::visit(IdExp* exp){
-    cout<< exp->value;
+int PrintVisitor::visit(IdExp* exp) {
+    
+    cout << exp->value;
     return 0;
 }
 
-int PrintVisitor::visit(BinaryExp* exp){
-    cout << "(";
+
+
+int PrintVisitor::visit(BinaryExp* exp) {
+    
     exp->left->accept(this);
-    cout<<" "<<binopToChar(exp->op) << " ";
+    cout << ' ' << Exp::binopToChar(exp->op) << ' ';
     exp->right->accept(this);
-    cout<<")";
     return 0;
 }
 
-int PrintVisitor::visit(WhileStm* stm){
-    cout<<"while (";
+int PrintVisitor::visit(WhileStm* stm) {
+    indent();
+    cout<<"while ";
     stm->condition->accept(this);
-    cout<<")";
-    cout<<":\n";
-    identLevel++;
-    stm->b->accept(this); 
-    identLevel--;
+    cout<<": "<<endl;
+    indentLevel++;
+    stm->b->accept(this);
+    indentLevel--;
     return 0;
 }
 
-int PrintVisitor::visit(IfStm* stm){
-    cout<<"if (";
+int PrintVisitor::visit(IfStm* stm) {
+    indent();
+    cout<<"if ";
     stm->condition->accept(this);
-    cout<<")";
-    cout<<":\n";
-    identLevel++;
-    stm->then->accept(this); 
-    identLevel--;
-    if (stm->els){
-        cout<<"else:\n";
-        identLevel++;
-        stm->els->accept(this); 
-        identLevel--;
+    cout<<": "<<endl;
+    indentLevel++;
+    stm->then->accept(this);
+    indentLevel--;
+    if(stm->els){
+        indent();
+        cout<<"else: "<<endl;
+        indentLevel++;
+        stm->els->accept(this);
+        indentLevel--;
     }
+
+    return 0;
+    
+}
+
+int PrintVisitor::visit(PrintStm* stm) {
+    indent();
+    cout << "echo(";
+    stm->e->accept(this);
+    cout << ")" << endl;
     return 0;
 }
 
-int PrintVisitor::visit(PrintStm* stm){
-    cout<<"print (";
+int PrintVisitor::visit(AssignStm* stm) {
+    indent();
+    cout << stm->id << "=";
     stm->e->accept(this);
+    cout << endl;
+    return 0;
+}
+
+int PrintVisitor::visit(ReturnStm* stm) {
+    indent();
+    cout << "return (";
+    if (stm->e) stm->e->accept(this);
     cout<<")";
+    cout << endl;
     return 0;
 }
 
-int PrintVisitor::visit(AssignStm* stm){
-    cout<<stm->id<<" = ";
-    stm->e->accept(this);
-    return 0;
-}
-
-int PrintVisitor::visit(ReturnStm* stm){
-    cout<<"return ";
-    stm->e->accept(this);
-    return 0;
-}
-
-int PrintVisitor::visit(VarDec* vd){
-    cout<<"var";
-    cout<<vd->type<<" ";
-    for (auto i: vd->vars){
-        cout<<","<< i <<" ";
+int PrintVisitor::visit(VarDec* vd) {
+    indent();
+    cout << "var ";
+    cout<<vd->vars[0];
+    for (int i = 1; i < vd->vars.size(); ++i){
+        cout << "," << vd->vars[i];
     }
-    cout<<";";
+    cout<<": " << vd->type << endl;
+
     return 0;
 }
 
-
-int PrintVisitor::visit(Body* b){
-    for(auto i:b->declarations){
+int PrintVisitor::visit(Body* b) {
+    
+    for (auto i : b->declarations){
         i->accept(this);
     }
-    for(auto i:b->StmList){
+    for (auto i : b->StmList){
         i->accept(this);
     }
+
     return 0;
 }
 
-int PrintVisitor::visit(FcallExp* fcall){
-    cout<<fcall->nombre<<"(";
-    for(auto i:fcall->argumentos){
-        i->accept(this);
+int PrintVisitor::visit(FcallExp* fcall) {
+    cout << fcall-> nombre << "(";
+    fcall->argumentos[0]->accept(this);
+    for (int i= 1; i<fcall->argumentos.size(); i++) {
+        cout << ",";
+        fcall->argumentos[i]->accept(this);
+        
     }
-    cout<<")";
+    cout << ")";
     return 0;
 }
 
-
-int PrintVisitor::visit(Fundec* fd){
-    cout<<"proc"<<fd->nombre<<"(";
-    for(size_t i=0; i< fd->Pnombres.size(); i++){
-        cout<<fd->Pnombres[i]<<":"<<fd->Ptipos[i]<<",";
-        if(i < fd->Pnombres.size()-1)
-            cout<<",";
+int PrintVisitor::visit(FunDec* fd) {
+    indent();
+    cout << "proc " << fd->nombre << "(";
+    for (size_t i = 0; i <  fd->Pnombres.size(); ++i) {
+        cout<< fd->Pnombres[i]<<":";
+        cout << fd->Ptipos[i];
+        if (i < fd->Pnombres.size() - 1)
+            cout << ", ";
     }
-    cout<<"): "<<fd->tipo<<" = "<<endl;
-    identLevel++;
+    cout << "): "<<fd->tipo<<" = "<<endl;
+    indentLevel++;
     fd->cuerpo->accept(this);
-    identLevel--;
+    indentLevel--;
     return 0;
 }
-
 
 int PrintVisitor::visit(Program* p) {
     indent();
-    vector<VarDec*> vars(p->vdlist.begin(), p->vdlist.end());
-    vector<FunDec*> procs(p->fdlist.begin(), p->fdlist.end());
-    vector<Stm*> stms(p->stmlist.begin(), p->stmlist.end());
-    for(auto& item: p->order){
-        if(item.first == "var"){
-            vars[item.second]->accept(this);
-        }
-        else if(item.first == "proc"){
-            procs[item.second]->accept(this);
-        }
-        else if(item.first == "stm"){
-            stms[item.second]->accept(this);
-        }
+    for( auto vd : p->vdlist){
+        vd->accept(this);
     }
+    for (auto fd : p->fdlist){
+        fd->accept(this);
+    }
+    p->cuerpo->accept(this);   
     return 0;
 }
 
@@ -384,170 +395,7 @@ void PrintVisitor::imprimir(Program* programa) {
     }
 }
 
-
 ////////////////////////////////////////////////////////////////
 //EVALVisitor
 ////////////////////////////////////////////////////////////////
 
-int EVALVisitor::visit(NumberExp* exp) {
-    return exp->value;
-}
-
-int EVALVisitor::visit(IdExp* exp) {
-    return env.lookup(exp->value);
-}
-
-int EVALVisitor::visit(BinaryExp* exp) {
-    int left = exp->left->accept(this);
-    int right = exp->right->accept(this);
-    int result=0;
-
-    switch(exp->op){
-        case PLUS_OP:
-            result = left + right;
-            break;
-        case MINUS_OP:
-            result = left - right;
-            break;
-        case MUL_OP:
-            result = left * right;
-            break;
-        case DIV_OP:
-            if(right == 0){
-                throw runtime_error("Division by zero");
-            }
-            result = left / right;
-            break;
-        case LS_OP:
-            result = left < right;
-            break;
-        case LSEQ_OP:
-            result = left <= right;
-            break;
-        case EQ_OP:
-            result = left == right;
-            break;
-        case GR_OP:
-            result = left > right;
-            break;
-        case GREQ_OP:
-            result = left >= right;
-            break;
-        default:
-            cout<<"OPERADOR DESCONOCIDO"<<endl;
-            result = 0;
-    }
-    return result;
-}
-
-
-int EVALVisitor::visit(PrintStm* p) {
-    cout<<p->e->accept(this);
-    return 0;
-}
-
-int EVALVisitor::visit(AssignStm* p) {
-    env.update(p->id,p->e->accept(this));
-    return 0;
-}
-
-int EVALVisitor::visit(IfStm* p) {
-    if (p->condition->accept(this)) {
-        p->then->accept(this);
-    }
-    else if (p->els) {
-        p->els->accept(this);
-    }
-    return 0;
-}
-
-int EVALVisitor::visit(WhileStm* p) {
-    while (p->condition->accept(this)) {
-        p->b->accept(this);
-    }
-    return 0;
-}
-
-int EVALVisitor::visit(ReturnStm* stm) {
-    retcall= true;
-    retval = stm->e->accept(this);
-    return 0;
-}
-
-int EVALVisitor::visit(Vardec* vd){
-    for(auto i:vd->vars){
-        env.add_var(i,0);
-    }
-    return 0;
-}
-
-int EVALVisitor::visit(Body* b){
-    env.add_level();
-    for(auto i:b->declarations){
-        i->accept(this);
-    }
-
-    for(auto i:b->StmList){
-        i->accept(this);
-    }
-    env.remove_level();
-    return 0;
-}
-
-int EVALVisitor::visit(FcallExp* fcall) {
-    retcall = false;
-    vector<int> arg;
-    for (auto i : fcall->argumentos) {
-        arg.push_back(i->accept(this));
-    } 
-    FunDec* fd = envfun[fcall->nombre];
-    env.add_level();
-
-    // Cargar los parámetros con sus valores
-    for (size_t i = 0; i < arg.size(); ++i) {
-        env.add_var(fd->Pnombres[i], arg[i]);
-    }
-
-    fd->cuerpo->accept(this);
-    env.remove_level();
-
-    if (retcall) {
-        return retval;
-    } else {
-        cout << "Error: la función '" << fcall->nombre << "' no tiene retorno" << endl;
-        exit(0);
-    }
-}
-
-int EVALVisitor::visit(FunDec* fd) {
-    envfun[fd->nombre] = fd;
-    return 0;
-}
-
-int EVALVisitor::visit(Program* p) {
-    env.add_level();    
-    vector<VarDec*> vars(p->vdlist.begin(), p->vdlist.end());
-    vector<FunDec*> procs(p->fdlist.begin(), p->fdlist.end());
-    vector<Stm*> stms(p->stmlist.begin(), p->stmlist.end());
-    for(auto& item: p->order){
-        if(item.first == "var"){
-            vars[item.second]->accept(this);
-        }
-        else if(item.first == "proc"){
-            procs[item.second]->accept(this);
-        }
-        else if(item.first == "stm"){
-            stms[item.second]->accept(this);
-        }
-    }
-    
-    env.remove_level();
-    return 0;
-}
-
-void EVALVisitor::interprete(Program* programa) {
-    if (programa) {
-        cout<<"Interpretando..."<<endl;
-        programa->accept(this);
-    }
-}

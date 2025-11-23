@@ -1,0 +1,6 @@
+.data
+print_fmt: .string "%ld \n"
+y: .quad 0
+x: .quad 0
+.text
+.section .note.GNU-stack,"",@progbits

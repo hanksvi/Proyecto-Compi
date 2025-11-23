@@ -72,7 +72,7 @@ public:
 class VarDec{
 public:
     string type;
-    list<string> vars;
+    vector<string> vars;
     VarDec();
     int accept(Visitor* visitor);
     ~VarDec();

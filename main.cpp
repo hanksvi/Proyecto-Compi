@@ -32,28 +32,43 @@ int main(int argc, const char* argv[]) {
 
     // Crear instancias de Scanner 
     Scanner scanner1(input.c_str());
+    Scanner scanner2(input.c_str());
 
-
-    //Generar tokens
+    // Generar archivo de tokens
     ejecutar_scanner(&scanner1, argv[1]);
-    
-    // Crear instancias de Parser
-    Parser parser(&scanner1);
-    
-    // Parsear y generar AST
-  
-    Program* program = parser.parseProgram();     
-        string inputFile(argv[1]);
-        size_t dotPos = inputFile.find_last_of('.');
-        string baseName = (dotPos == string::npos) ? inputFile : inputFile.substr(0, dotPos);
-        string outputFilename = baseName + ".s";
-        ofstream outfile(outputFilename);
-        if (!outfile.is_open()) {
-            cerr << "Error al crear el archivo de salida: " << outputFilename << endl;
-            return 1;
-        }
 
-    cout << "Generando codigo ensamblador en " << outputFilename << endl;
+    // Crear instancias de Parser
+    Parser parser(&scanner2);
+
+    // Parsear y generar AST
+    Program* program = nullptr;
+    
+    try {
+        program = parser.parseProgram();
+    } catch (const std::exception& e) {
+        cerr << "Error al parsear: " << e.what() << endl;
+        return 1;
+    }
+
+    // Impresión del AST
+    cout << "\n=== Iniciando impresión del programa ===\n";
+    PrintVisitor impresion;
+    impresion.imprimir(program);
+
+     
+
+    // Generación de código ensamblador
+    string inputFile(argv[1]);
+    size_t dotPos = inputFile.find_last_of('.');
+    string baseName = (dotPos == string::npos) ? inputFile : inputFile.substr(0, dotPos);
+    string outputFilename = baseName + ".s";
+    ofstream outfile(outputFilename);
+    if (!outfile.is_open()) {
+        cerr << "Error al crear el archivo de salida: " << outputFilename << endl;
+        return 1;
+    }
+
+    cout << "\n=== Generando codigo ensamblador en " << outputFilename << " ===\n";
     GenCodeVisitor codigo(outfile);
     codigo.generar(program);
     outfile.close();

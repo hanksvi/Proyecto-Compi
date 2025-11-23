@@ -68,6 +68,13 @@ public:
 };
 
 class PrintVisitor: public Visitor{
+private:
+    int indentLevel = 0;
+    void indent(){
+        for (int i=0; i<indentLevel; i++){
+            cout<<"  ";
+        }
+    }
 public:
     int visit(BinaryExp* exp) override;
     int visit(NumberExp* exp) override;
@@ -83,7 +90,7 @@ public:
     int visit(ReturnStm* r) override;
     int visit(FunDec* fd) override;
 
-    void imprimir(Program* program)
+    void imprimir(Program* program);
 };
 
 class EVALVisitor: public Visitor{
@@ -101,7 +108,7 @@ public:
     int visit(FcallExp* fcall) override;
     int visit(ReturnStm* r) override;
     int visit(FunDec* fd) override;
-    void interprete(Program* program)
-}
+    void interprete(Program* program);
+};
 
 #endif // VISITOR_H

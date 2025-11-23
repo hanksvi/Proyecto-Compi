@@ -72,8 +72,13 @@ Program* Parser::parseProgram() {
             }
         }
 
-    p->cuerpo = parseBody();    
-    cout << "Parser exitoso" << endl;
+    p->cuerpo = parseBody();
+
+    if (!isAtEnd()) {
+        throw runtime_error("Error sintáctico");
+    }
+    
+    cout << "Parseo exitoso" << endl;
     return p;
 }
 
@@ -122,6 +127,7 @@ FunDec *Parser::parseFunDec() {
 
 
 Body* Parser::parseBody(){
+    
     Body* b = new Body();
     if(check(Token::VAR)) {
         b->declarations.push_back(parseVarDec());
@@ -132,9 +138,10 @@ Body* Parser::parseBody(){
         }
     }
     b->StmList.push_back(parseStm());
-    while(match(Token::NEWLINE)) {
+    while (match(Token::NEWLINE)) {
         b->StmList.push_back(parseStm());
     }
+    
     return b;
 }
 
@@ -163,7 +170,7 @@ Stm* Parser::parseStm() {
         match(Token::RPAREN);
         return r;
     }
-else if (match(Token::IF)) {
+    else if (match(Token::IF)) {
         e = parseCE();
         match(Token:: COLON);
         match(Token::NEWLINE);
@@ -207,7 +214,7 @@ else if (match(Token::IF)) {
         a = new WhileStm(e, tb);
     }
     else{
-        throw runtime_error("Error sintáctico");
+        throw runtime_error("Error sintácticossss");
     }
     return a;
 }
@@ -325,6 +332,6 @@ Exp* Parser::parseF() {
             }
     }
     else {
-        throw runtime_error("Error sintáctico");
+        throw runtime_error("Error sintácticosss");
     }
 }
