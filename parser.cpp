@@ -192,11 +192,23 @@ Stm* Parser::parseStm() {
     Body* tb = nullptr;
     Body* fb = nullptr;
     if(match(Token::ID)){
-        variable = previous->text;
-        match(Token::ASSIGN);
-        e = parseCE();
         
+        variable = previous->text;
+        if(check(Token::LPAREN)) {
+            match(Token::LPAREN);
+            FcallStm* fcall = new FcallStm();
+            fcall->nombre = variable;
+            fcall->argumentos.push_back(parseCE());
+            while(match(Token::COMA)) {
+                fcall->argumentos.push_back(parseCE());
+            }
+            match(Token::RPAREN);
+            return fcall;
+        }
+        else if (match(Token::ASSIGN)){
+        e = parseCE();
         return new AssignStm(variable,e);
+        }
     }
     else if(match(Token::ECHO)){
         match(Token::LPAREN);
@@ -369,13 +381,23 @@ Exp* Parser::parseF() {
 
         return new NumberExp(stoi(previous->text));
     }
+    else if (match(Token::TRUE))
+    {
+        BoolExp* e = new BoolExp();
+        e->valor = 1;
+        return e;
+    }
+    else if (match(Token::FALSE))
+    {
+        BoolExp* e = new BoolExp();
+        e->valor = 0;
+        return e;
+    }
     else if(match(Token::FLOAT)){
         cout<<stod(previous->text)<<endl;
         return new NumberExp(stod(previous->text));
     }
-    else if (match(Token::STRING)) {
-        return new StringExp(previous->text);
-    }
+    
     else if (match(Token::TRUE)) {
         return new NumberExp(1);
     }

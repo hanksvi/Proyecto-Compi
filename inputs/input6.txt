@@ -1,20 +1,5 @@
-var res: int
+var x, y: int
 
-proc saludo(): int =
-    echo(1)
-    echo(2)
-    return(0)
-
-proc procesar(a:int): int =
-    var x: int
-    x = a * 10
-    echo(x)
-    return(x)
-
-proc main(): int =
-    var v: int
-    v = procesar(3)
-    echo(v)
-    return(0)
-
-res = main()
+x = -5
+y = if x < 0: 100 else: 200
+echo(y)
