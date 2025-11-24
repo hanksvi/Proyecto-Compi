@@ -2,11 +2,11 @@
 Parseo exitoso
 
 === Iniciando impresión del programa ===
-var x: bool
-var y: int
-x=true
-y=x.int
-echo(y)
+proc doble(a:int): int = 
+  return (a * 2)
+proc triple(a:int): int = 
+  return (doble(a) + a)
+echo(triple(3))
 
  ===Iniciando chequeo de tipos===
 Revisión exitosa
@@ -16,7 +16,6 @@ Revisión exitosa
 Revisión exitosa
 
  Generando ejecutable 
-1
+9
 
 === STDERR ===
-Advertencia: tipo de expresión no encontrado

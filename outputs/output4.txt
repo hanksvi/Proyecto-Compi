@@ -3,22 +3,9 @@ Parseo exitoso
 
 === Iniciando impresión del programa ===
 var x: int
-var flag: bool
-x=10
-if x.bool: 
-  echo(1)
-else: 
-  echo(0)
+x=y
 
  ===Iniciando chequeo de tipos===
-Revisión exitosa
- Chequeo de tipos exitoso
-
- Generando codigo ensamblador en inputs/input4.s
-Revisión exitosa
-
- Generando ejecutable 
-1
 
 === STDERR ===
-Advertencia: tipo de expresión no encontrado
+Error: variable 'y' no declarada.

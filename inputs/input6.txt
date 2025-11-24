@@ -1,5 +1,1 @@
-var x, y: int
 
-x = -5
-y = if x < 0: 100 else: 200
-echo(y)

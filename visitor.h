@@ -60,9 +60,13 @@ public:
 
     // Obtiene el tipo como string
     string obtenerTipoString(Exp* exp);
+    
+    // Obtiene el tamaño en bytes de un tipo
+    int getSizeOfType(const string& typeStr);
 
     unordered_map<string,int> fun_reserva;
     unordered_map<string, bool> memoriaGlobal;
+    unordered_map<string, string> variableTypes;  // Guardar tipos de variables locales
     int offset = -8;
     int labelcont = 0;
     bool entornoFuncion = false;

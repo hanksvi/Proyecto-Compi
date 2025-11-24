@@ -1,6 +1,9 @@
-var x: int
-var y: bool
+var a: int
+a = 10
 
-x = 5
-y = x.bool
-echo(y)
+if a == 10:
+    echo(1)
+if a == 5:
+    echo(2)
+else:
+    echo(3)

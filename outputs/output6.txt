@@ -1,4 +1,4 @@
 === STDOUT ===
 
 === STDERR ===
-Error al parsear: Error sintáctico: parseF
+Error al parsear: Error sintáctico: se esperaba una sentencia en el cuerpo

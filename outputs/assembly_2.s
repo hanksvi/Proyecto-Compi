@@ -1,21 +1,35 @@
 .data
 print_fmt: .string "%ld \n"
-y: .quad 0
 x: .quad 0
 .text
 .globl main
 main:
  pushq %rbp
  movq %rsp, %rbp
- movq $0, %rax
+ movq $3, %rax
+ pushq %rax
+ movq $4, %rax
+ movq %rax, %rcx
+ popq %rax
+ addq %rcx, %rax
+ pushq %rax
+ movq $2, %rax
+ movq %rax, %rcx
+ popq %rax
+ imulq %rcx, %rax
+ pushq %rax
+ movq $10, %rax
+ pushq %rax
+ movq $5, %rax
+ movq %rax, %rcx
+ popq %rax
+ cqto
+ idivq %rcx
+ movq %rax, %rcx
+ popq %rax
+ subq %rcx, %rax
  movq %rax, x(%rip)
  movq x(%rip), %rax
- cmpq $0, %rax
- movl $0, %eax
- setne %al
- movzbq %al, %rax
- movq %rax, y(%rip)
- movq y(%rip), %rax
  movq %rax, %rsi
  leaq print_fmt(%rip), %rdi
  movl $0, %eax

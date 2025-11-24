@@ -83,6 +83,17 @@ string GenCodeVisitor::obtenerTipoString(Exp* exp) {
     return tipo->toString();
 }
 
+int GenCodeVisitor::getSizeOfType(const string& typeStr) {
+    // Retorna el tamaño en bytes de un tipo
+    if (typeStr == "int" || typeStr == "float" || typeStr == "uint" || typeStr == "bool") {
+        return 8; // 64 bits
+    } else if (typeStr == "int32" || typeStr == "float32" || typeStr == "uint32") {
+        return 4; // 32 bits
+    } else {
+        return 8; // Por defecto 8 bytes
+    }
+}
+
 
 int GenCodeVisitor::generar(Program* program) {
     
@@ -128,12 +139,14 @@ out << ".data\nprint_fmt: .string \"%ld \\n\""<<endl;
 }
 
 int GenCodeVisitor::visit(VarDec* vd) {
+    int sizeOfType = getSizeOfType(vd->type);
     for (auto var : vd->vars) {
         if (enNivelGlobal) {
             memoriaGlobal[var] = true;
         } else {
+            variableTypes[var] = vd->type;
             env.add_var(var, offset);
-            offset -= 8;
+            offset -= sizeOfType;
         }
     }
         return 0;
@@ -240,14 +253,18 @@ int GenCodeVisitor::visit(FcallStm* stm) {
 
 
 int GenCodeVisitor::visit(Body* body) {
-    env.add_level();
+    if (!entornoFuncion) {
+        env.add_level();
+    }
     for (auto dec : body->declarations){
         dec->accept(this);
     }
     for (auto s : body->StmList){
         s->accept(this);
     }
-    env.remove_level();
+    if (!entornoFuncion) {
+        env.remove_level();
+    }
         return 0;
 }
 
@@ -287,6 +304,7 @@ int GenCodeVisitor::visit(ReturnStm* stm) {
 int GenCodeVisitor::visit(FunDec* fd) {
     
     entornoFuncion = true;
+    variableTypes.clear();  // Limpiar tipos de variables locales
     
     offset = -8;
     nombreFuncion = fd->nombre;
@@ -296,11 +314,17 @@ int GenCodeVisitor::visit(FunDec* fd) {
     out << " pushq %rbp" << endl;
     out << " movq %rsp, %rbp" << endl;
     out << " subq $" << fun_reserva[fd->nombre]*8 << ", %rsp" << endl;
+    
+    // Agregar nuevo nivel de scope para la función
+    env.add_level();
+    
     int size = fd->Pnombres.size();
     for (int i = 0; i < size; i++) {
+        variableTypes[fd->Pnombres[i]] = fd->Ptipos[i];
+        int paramSize = getSizeOfType(fd->Ptipos[i]);
         env.add_var(fd->Pnombres[i], offset);
         out << " movq " << argRegs[i] << "," << offset << "(%rbp)" << endl;
-        offset -= 8;
+        offset -= paramSize;
     }
     for (auto i: fd->cuerpo->declarations){
         i->accept(this);
@@ -310,6 +334,9 @@ int GenCodeVisitor::visit(FunDec* fd) {
     for (auto i: fd->cuerpo->StmList){
         i->accept(this);
     }
+    
+    // Remover el nivel de scope de la función
+    env.remove_level();
     
     out << ".end_"<< fd->nombre << ":"<< endl;
     out << "leave" << endl;
@@ -612,6 +639,7 @@ unordered_map<string, FunDec*> tablaDeFunciones;
 
 int valorRetorno = 0;
 bool hayRetorno = false;
+int scopeDepth = 0;  // Track scope depth: 0 = global, >0 = local
 
 int EVALVisitor::visit(NumberExp* exp) {
     return exp->value;
@@ -722,9 +750,11 @@ int EVALVisitor::visit(WhileStm* stm) {
 }
 int EVALVisitor::visit(VarDec* vd) {
     for (const auto& var : vd->vars) {
-        if (variablesLocales.size() > 0) {
+        if (scopeDepth > 0) {
+            // We're in a local scope (inside a Body)
             variablesLocales[var] = 0;
         } else {
+            // We're in global scope
             variablesGlobales[var] = 0;
         }
     }
@@ -732,6 +762,12 @@ int EVALVisitor::visit(VarDec* vd) {
     return 0;
 }
 int EVALVisitor::visit(Body* b) {
+    // Save current local variables
+    unordered_map<string, int> savedLocals = variablesLocales;
+    
+    // Enter new scope
+    scopeDepth++;
+    
     for (auto dec : b->declarations) {
         dec->accept(this);
     }
@@ -741,6 +777,10 @@ int EVALVisitor::visit(Body* b) {
         
         if (hayRetorno) break;
     }
+    
+    // Exit scope and restore previous local variables
+    scopeDepth--;
+    variablesLocales = savedLocals;
     
     return 0;
 }
@@ -767,18 +807,28 @@ int EVALVisitor::visit(FcallExp* fcall) {
     
     FunDec* funcion = tablaDeFunciones[fcall->nombre];
     
+    // Evaluar argumentos en el contexto actual
+    vector<int> valoresArgs;
+    for (size_t i = 0; i < fcall->argumentos.size(); i++) {
+        valoresArgs.push_back(fcall->argumentos[i]->accept(this));
+    }
+    
+    // Guardar variables locales anteriores
     unordered_map<string, int> variablesAnteriores = variablesLocales;
     variablesLocales.clear();
     
-    for (size_t i = 0; i < fcall->argumentos.size(); i++) {
-        int valorArg = fcall->argumentos[i]->accept(this);
+    // Agregar parámetros con sus valores evaluados
+    for (size_t i = 0; i < valoresArgs.size(); i++) {
         if (i < funcion->Pnombres.size()) {
-            variablesLocales[funcion->Pnombres[i]] = valorArg;
+            variablesLocales[funcion->Pnombres[i]] = valoresArgs[i];
         }
     }
     
+    // Entrar en nuevo scope
+    scopeDepth++;
     hayRetorno = false;
     funcion->cuerpo->accept(this);
+    scopeDepth--;
     
     int resultado = valorRetorno;
     
@@ -796,18 +846,28 @@ int EVALVisitor::visit(FcallStm* stm) {
     
     FunDec* funcion = tablaDeFunciones[stm->nombre];
     
+    // Evaluar argumentos en el contexto actual
+    vector<int> valoresArgs;
+    for (size_t i = 0; i < stm->argumentos.size(); i++) {
+        valoresArgs.push_back(stm->argumentos[i]->accept(this));
+    }
+    
+    // Guardar variables locales anteriores
     unordered_map<string, int> variablesAnteriores = variablesLocales;
     variablesLocales.clear();
     
-    for (size_t i = 0; i < stm->argumentos.size(); i++) {
-        int valorArg = stm->argumentos[i]->accept(this);
+    // Agregar parámetros con sus valores evaluados
+    for (size_t i = 0; i < valoresArgs.size(); i++) {
         if (i < funcion->Pnombres.size()) {
-            variablesLocales[funcion->Pnombres[i]] = valorArg;
+            variablesLocales[funcion->Pnombres[i]] = valoresArgs[i];
         }
     }
     
+    // Entrar en nuevo scope
+    scopeDepth++;
     hayRetorno = false;
     funcion->cuerpo->accept(this);
+    scopeDepth--;
     
     int resultado = valorRetorno;
     
@@ -837,6 +897,7 @@ void EVALVisitor::interprete(Program* programa) {
         tablaDeFunciones.clear();
         hayRetorno = false;
         valorRetorno = 0;
+        scopeDepth = 0;  // Initialize scope depth
         
    
         programa->accept(this);

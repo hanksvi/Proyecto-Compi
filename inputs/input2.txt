@@ -1,6 +1,3 @@
 var x: int
-var y: bool
-
-x = 0
-y = x.bool
-echo(y)
+x = (3 + 4) * 2 - (10 / 5)
+echo(x)

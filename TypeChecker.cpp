@@ -25,9 +25,8 @@ void FunDec::accept(TypeVisitor* v) { v->visit(this); }
 void Body::accept(TypeVisitor* v) { v->visit(this); }
 void Program::accept(TypeVisitor* v) { v->visit(this); }
 
-// ===========================================================
+
 //   Constructor del TypeChecker
-// ===========================================================
 
 TypeChecker::TypeChecker() {
     intType = new Type(Type::INT);
@@ -44,9 +43,19 @@ TypeChecker::TypeChecker() {
 }
 
 
-// ===========================================================
+
 //   Registrar funciones globales
-// ===========================================================
+
+int TypeChecker::getSizeOfType(const string& typeStr) {
+    // Retorna el tamaño en bytes de un tipo
+    if (typeStr == "int" || typeStr == "float" || typeStr == "uint" || typeStr == "bool") {
+        return 8; 
+    } else if (typeStr == "int32" || typeStr == "float32" || typeStr == "uint32") {
+        return 4; 
+    } else {
+        return 8; 
+    }
+}
 
 void TypeChecker::add_function(FunDec* fd) {
     if (functions.find(fd->nombre) != functions.end()) {
@@ -76,9 +85,9 @@ Type* TypeChecker::getExpressionType(Exp* exp) {
     return intType;
 }
 
-// ===========================================================
+
 //   Método principal de verificación
-// ===========================================================
+
 
 void TypeChecker::typecheck(Program* program) {
     if (program) program->accept(this);
@@ -86,9 +95,8 @@ void TypeChecker::typecheck(Program* program) {
 }
 
 
-// ===========================================================
+
 //   Nivel superior: Programa y Bloque
-// ===========================================================
 
 void TypeChecker::visit(Program* p){
     // Registramos funciones
@@ -116,13 +124,14 @@ void TypeChecker::visit(Body* b) {
     env.remove_level();
 }
 
-// ===========================================================
+
 //   Declaraciones
-// ===========================================================
+
 
 void TypeChecker::visit(VarDec* v){
     Type* t = new Type();
-    locales += v->vars.size();
+    int sizeOfType = getSizeOfType(v->type);
+    locales += v->vars.size() * sizeOfType;
     if (!t->set_basic_type(v->type)){
         cerr << "Error: tipo de variable no válido." << endl;
         exit(0);
@@ -141,8 +150,11 @@ void TypeChecker::visit(FunDec* f){
     string previousName = currentNameFun;
     Type* previousType = currentTypeFun;
 
-    // cuenta de variables en funcion
-    int parametros = f->Pnombres.size();
+    // cuenta de variables en funcion (en bytes)
+    int parametros = 0;
+    for (const auto& ptype : f->Ptipos) {
+        parametros += getSizeOfType(ptype);
+    }
     locales = 0;
 
     currentNameFun = f->nombre;
@@ -163,17 +175,16 @@ void TypeChecker::visit(FunDec* f){
     f->cuerpo->accept(this);
     
 
-    // cuenta de variables en funcion
-    fun_locales[f->nombre] = parametros + locales;
+    // cuenta de variables en funcion (en bytes)
+    fun_locales[f->nombre] = (parametros + locales) / 8;  // Convertir a número de slots de 8 bytes
 
 
     currentNameFun = previousName;
     currentTypeFun = previousType;
 }
 
-// ===========================================================
 //   Sentencias
-// ===========================================================
+
 
 void TypeChecker::visit(PrintStm* stm){
     Type* t = stm->e->accept(this);
@@ -287,9 +298,9 @@ void TypeChecker::visit(FcallStm* stm){
     
 }
 
-// ===========================================================
+
 //   Expresiones
-// ===========================================================
+
 
 Type* TypeChecker::visit(BinaryExp* e) {
     Type* left = e->left->accept(this);
@@ -310,6 +321,7 @@ Type* TypeChecker::visit(BinaryExp* e) {
                 exit(0);
                 }
             resulType = left;
+            break;
         case LS_OP:    
         case LSEQ_OP:
         case GR_OP:
@@ -320,6 +332,7 @@ Type* TypeChecker::visit(BinaryExp* e) {
                 exit(0);
             }
             resulType= boolType;
+            break;
         default:
             cerr << "Error: operador binario no soportado." << endl;
             exit(0);

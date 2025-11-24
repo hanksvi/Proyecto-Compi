@@ -2,11 +2,14 @@
 Parseo exitoso
 
 === Iniciando impresión del programa ===
-var x: int
-var y: bool
-x=5
-y=x.bool
-echo(y)
+var a: int
+a=10
+if a == 10: 
+  echo(1)
+if a == 5: 
+  echo(2)
+else: 
+  echo(3)
 
  ===Iniciando chequeo de tipos===
 Revisión exitosa
@@ -17,6 +20,6 @@ Revisión exitosa
 
  Generando ejecutable 
 1
+3
 
 === STDERR ===
-Advertencia: tipo de expresión no encontrado

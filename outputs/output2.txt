@@ -3,10 +3,8 @@ Parseo exitoso
 
 === Iniciando impresión del programa ===
 var x: int
-var y: bool
-x=0
-y=x.bool
-echo(y)
+x=3 + 4 * 2 - 10 / 5
+echo(x)
 
  ===Iniciando chequeo de tipos===
 Revisión exitosa
@@ -16,7 +14,6 @@ Revisión exitosa
 Revisión exitosa
 
  Generando ejecutable 
-0
+12
 
 === STDERR ===
-Advertencia: tipo de expresión no encontrado

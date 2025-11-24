@@ -54,9 +54,9 @@ public:
 };
     
 
-// ──────────────────────────────────────────────
+
 //   CLASE TYPECHECKER
-// ──────────────────────────────────────────────
+
 
 class TypeChecker : public TypeVisitor {
 private:
@@ -80,6 +80,9 @@ private:
     Type* currentTypeFun;
     // Registro de funciones
     void add_function(FunDec* fd);
+    
+    // Función auxiliar para obtener el tamaño en bytes de un tipo
+    int getSizeOfType(const string& typeStr);
 
 public:
     unordered_map<string,int> fun_locales;
