@@ -2,12 +2,21 @@
 Parseo exitoso
 
 === Iniciando impresión del programa ===
-proc imprimir(x:int): void = 
-  echo(x)
-  return (x)
-imprimir=2
+var x: bool
+var y: int
+x=true
+y=x.int
+echo(y)
 
  ===Iniciando chequeo de tipos===
+Revisión exitosa
+ Chequeo de tipos exitoso
+
+ Generando codigo ensamblador en inputs/input3.s
+Revisión exitosa
+
+ Generando ejecutable 
+1
 
 === STDERR ===
-Error: funcion imprimir no debe retornar nada (funcion tipo void).
+Advertencia: tipo de expresión no encontrado

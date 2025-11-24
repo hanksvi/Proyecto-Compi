@@ -1,3 +1,6 @@
 var x: int
-x = 2
-echo(x)
+var y: bool
+
+x = 5
+y = x.bool
+echo(y)

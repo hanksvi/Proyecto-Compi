@@ -1,5 +1,6 @@
-proc imprimir(x: int): void =
-    echo(x)
-    return(x)
+var x: bool
+var y: int
 
-imprimir(2)
+x = true
+y = x.int
+echo(y)

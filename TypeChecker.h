@@ -24,6 +24,7 @@ class CastExp;
 class IfExp;
 class WhileStm;
 class IfStm;
+class FcallStm;
 
 class TypeVisitor {
 public:
@@ -40,6 +41,7 @@ public:
     virtual void visit(ReturnStm* stm) = 0;
     virtual void visit(WhileStm* stm) = 0;
     virtual void visit(IfStm* stm) = 0;
+    virtual void visit(FcallStm* stm) = 0;
 
     // --- Expresiones ---
     virtual Type* visit(BinaryExp* e) = 0;
@@ -61,6 +63,7 @@ private:
     Environment<Type*> env;                 // Entorno de variables y sus tipos
     unordered_map<string, Type*> functions; // Entorno de funciones
     unordered_map<string, FunDec*> functionDeclarations;
+    unordered_map<Exp*, Type*> expressionTypes; // guarda los tipos de cada expresion
     // Tipos básicos
     Type* intType;
     Type* boolType;
@@ -85,7 +88,7 @@ public:
 
     // Método principal de verificación
     void typecheck(Program* program);
-
+    Type* getExpressionType(Exp* exp);
     // --- Visitas de alto nivel ---
     void visit(Program* p) override;
     void visit(Body* b) override;
@@ -98,6 +101,7 @@ public:
     void visit(ReturnStm* stm) override;
     void visit(WhileStm* stm) override;
     void visit(IfStm* stm) override;
+    void visit(FcallStm* stm) override;
 
     // --- Expresiones ---
     Type* visit(BinaryExp* e) override;

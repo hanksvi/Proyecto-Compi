@@ -24,6 +24,7 @@ class FunDec;
 class IfExp;
 class CastExp;
 class BoolExp;
+class FcallStm;
 class Visitor {
 public:
     // 
@@ -39,6 +40,7 @@ public:
     virtual int visit(WhileStm* stm) = 0;
     virtual int visit(IfStm* stm) = 0;
     virtual int visit(AssignStm* stm) = 0;
+    virtual int visit(FcallStm* stm) = 0;
     virtual int visit(Body* body) = 0;
     virtual int visit(VarDec* vd) = 0;
     virtual int visit(FcallExp* fcall) = 0;
@@ -55,11 +57,16 @@ public:
     int generar(Program* program);
     Environment<int> env;
     TypeChecker tipe;
+
+    // Obtiene el tipo como string
+    string obtenerTipoString(Exp* exp);
+
     unordered_map<string,int> fun_reserva;
     unordered_map<string, bool> memoriaGlobal;
     int offset = -8;
     int labelcont = 0;
     bool entornoFuncion = false;
+    bool enNivelGlobal = true;
     string nombreFuncion;
     int visit(BinaryExp* exp) override;
     int visit(NumberExp* exp) override;
@@ -79,6 +86,7 @@ public:
     int visit(WhileStm* stm) override;
     int visit(IfStm* stm) override;
     int visit(ReturnStm* stm) override;
+    int visit(FcallStm* stm) override;
     
 };
 
@@ -108,6 +116,7 @@ public:
     int visit(FcallExp* fcall) override;
     int visit(ReturnStm* r) override;
     int visit(FunDec* fd) override;
+    int visit(FcallStm* stm) override;
 
     void imprimir(Program* program);
 };
@@ -131,6 +140,7 @@ public:
     int visit(FcallExp* fcall) override;
     int visit(ReturnStm* r) override;
     int visit(FunDec* fd) override;
+    int visit(FcallStm* stm) override;
     void interprete(Program* program);
 };
 

@@ -1,5 +1,8 @@
-var i: int
+var x: int
+var y: bool
+var z: int
 
-i = 5
-while i:
-    i = i - 1
+x = 5
+y = x.bool
+z = y.int
+echo(z)

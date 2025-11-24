@@ -71,8 +71,17 @@ int ReturnStm::accept(Visitor* visitor){
     return visitor->visit(this);
 }
 
+int FcallStm::accept(Visitor* visitor){
+    return visitor->visit(this);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////
+
+string GenCodeVisitor::obtenerTipoString(Exp* exp) {
+    Type* tipo = tipe.getExpressionType(exp);
+    return tipo->toString();
+}
 
 
 int GenCodeVisitor::generar(Program* program) {
@@ -86,6 +95,7 @@ int GenCodeVisitor::generar(Program* program) {
 
 int GenCodeVisitor::visit(Program* program) {
 out << ".data\nprint_fmt: .string \"%ld \\n\""<<endl;
+    enNivelGlobal = true;
     env.add_level();
     for (auto dec : program->vdlist){
         dec->accept(this);
@@ -96,14 +106,16 @@ out << ".data\nprint_fmt: .string \"%ld \\n\""<<endl;
     }
 
     out << ".text\n";
-    out << ".globl main\n";
-    out << "main:\n";
-    out << " pushq %rbp\n";
-    out << " movq %rsp, %rbp\n";
+    
     for (auto dec : program->fdlist){
         dec->accept(this);
     }
 
+    out << ".globl main\n";
+    out << "main:\n";
+    out << " pushq %rbp\n";
+    out << " movq %rsp, %rbp\n";
+    enNivelGlobal = false;
     program->cuerpo->accept(this);
 
     out << " movl $0, %eax\n";
@@ -117,7 +129,7 @@ out << ".data\nprint_fmt: .string \"%ld \\n\""<<endl;
 
 int GenCodeVisitor::visit(VarDec* vd) {
     for (auto var : vd->vars) {
-        if (!entornoFuncion) {
+        if (enNivelGlobal) {
             memoriaGlobal[var] = true;
         } else {
             env.add_var(var, offset);
@@ -135,10 +147,16 @@ int GenCodeVisitor::visit(NumberExp* exp) {
 }
 
 int GenCodeVisitor::visit(IdExp* exp) {
-    if (memoriaGlobal.count(exp->value))
-        out << " movq " << exp->value << "(%rip), %rax"<<endl;
-    else
+    if(env.check_local(exp->value)){
         out << " movq " << env.lookup(exp->value) << "(%rbp), %rax"<<endl;
+    }
+    else if (memoriaGlobal.count(exp->value))
+        out << " movq " << exp->value << "(%rip), %rax"<<endl;
+    else{
+        cerr << "Error: variable '" << exp->value << "' no encontrada." << endl;
+        exit(1);
+    }
+    
     return 0;
 }
 
@@ -152,10 +170,37 @@ int GenCodeVisitor::visit(BinaryExp* exp) {
         case PLUS_OP:  out << " addq %rcx, %rax\n"; break;
         case MINUS_OP: out << " subq %rcx, %rax\n"; break;
         case MUL_OP:   out << " imulq %rcx, %rax\n"; break;
+        case DIV_OP:   out << " cqto\n"
+                        <<" idivq %rcx\n"; 
+                    break;
         case LS_OP:
             out << " cmpq %rcx, %rax\n"
                       << " movl $0, %eax\n"
                       << " setl %al\n"
+                      << " movzbq %al, %rax\n";
+            break;
+        case LSEQ_OP:
+            out << " cmpq %rcx, %rax\n"
+                      << " movl $0, %eax\n"
+                      << " setle %al\n"
+                      << " movzbq %al, %rax\n";
+            break;
+        case GR_OP:
+            out << " cmpq %rcx, %rax\n"
+                      << " movl $0, %eax\n"
+                      << " seta %al\n"
+                      << " movzbq %al, %rax\n";
+            break;
+        case GREQ_OP:
+            out << " cmpq %rcx, %rax\n"
+                      << " movl $0, %eax\n"
+                      << " setae %al\n"
+                      << " movzbq %al, %rax\n";
+            break;
+        case EQ_OP:
+            out << " cmpq %rcx, %rax\n"
+                      << " movl $0, %eax\n"
+                      << " sete %al\n"
                       << " movzbq %al, %rax\n";
             break;
     }
@@ -182,6 +227,16 @@ int GenCodeVisitor::visit(PrintStm* stm) {
             return 0;
 }
 
+int GenCodeVisitor::visit(FcallStm* stm) {
+    vector<std::string> argRegs = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
+    int size = stm->argumentos.size();
+    for (int i = 0; i < size; i++) {
+        stm->argumentos[i]->accept(this);
+        out << " mov %rax, " << argRegs[i] <<endl;
+    }
+    out << "call " << stm->nombre << endl;
+    return 0;
+}
 
 
 int GenCodeVisitor::visit(Body* body) {
@@ -277,15 +332,75 @@ int GenCodeVisitor::visit(FcallExp* exp) {
 
 int GenCodeVisitor::visit(IfExp* exp){
     
+    int label = labelcont++;
+    
+    // Evaluar condición
+    exp->condicion->accept(this);
+    
+    // Si es falso, saltar al else
+    out << " cmpq $0, %rax" << endl;
+    out << " je ifexp_else_" << label << endl;
+    
+    // Rama then
+    exp->then->accept(this);
+    out << " jmp ifexp_end_" << label << endl;
+    
+    // Rama else
+    out << "ifexp_else_" << label << ":" << endl;
+    exp->els->accept(this);
+    
+    // Fin (el resultado queda en %rax)
+    out << "ifexp_end_" << label << ":" << endl;
+    
     return 0;
 }
 
 int GenCodeVisitor::visit(CastExp* exp){
+    
+    exp->e->accept(this);
 
+    string origenType = obtenerTipoString(exp->e);
+    string destiniType = exp->tipo;
+
+    if(origenType == destiniType){
+        return 0;    
+    }
+
+    // int -> bool
+    if((origenType == "int" || origenType == "int32") && destiniType == "bool"){
+        out << " cmpq $0, %rax" << endl;
+        out << " movl $0, %eax" << endl;
+        out << " setne %al" << endl;
+        out << " movzbq %al, %rax" << endl;
+        return 0;
+    }
+    
+    // bool -> int
+    if (origenType == "bool" && (destiniType == "int" || destiniType == "int32")) {
+        
+        return 0;
+    }
+
+    // int -> float
+    if ((origenType == "int" || origenType == "int32") && 
+        (destiniType == "float" || destiniType == "float32")) {
+        out << " cvtsi2sd %rax, %xmm0" << endl;
+        out << " movq %xmm0, %rax" << endl;
+        return 0;
+    }
+
+    // float -> int
+    if ((origenType == "float" || origenType == "float32") && 
+        (destiniType == "int" || destiniType == "int32")) {
+        out << " movq %rax, %xmm0" << endl;
+        out << " cvttsd2si %xmm0, %rax" << endl;
+        return 0;
+    }
     return 0;
 }
 int GenCodeVisitor::visit(BoolExp* exp){
-    return 0;
+    out << " movq $" << (exp->valor ? 1 : 0) << ", %rax" << endl;
+    return 0;   
 }
 
 
@@ -370,6 +485,22 @@ int PrintVisitor::visit(IfStm* stm) {
 
     return 0;
     
+}
+
+int PrintVisitor::visit(FcallStm* stm) {
+    cout << stm-> nombre << "(";
+    if(stm->argumentos.size()==0){
+        cout << ")";
+        return 0;
+    }
+    stm->argumentos[0]->accept(this);
+    for (int i= 1; i<stm->argumentos.size(); i++) {
+        cout << ",";
+        stm->argumentos[i]->accept(this);
+        
+    }
+    cout << ")";
+    return 0;
 }
 
 int PrintVisitor::visit(PrintStm* stm) {
@@ -656,6 +787,36 @@ int EVALVisitor::visit(FcallExp* fcall) {
     
     return resultado;
 }
+
+int EVALVisitor::visit(FcallStm* stm) {
+    if (!tablaDeFunciones.count(stm->nombre)) {
+        cerr << "Error: función '" << stm->nombre << "' no definida" << endl;
+        return 0;
+    }
+    
+    FunDec* funcion = tablaDeFunciones[stm->nombre];
+    
+    unordered_map<string, int> variablesAnteriores = variablesLocales;
+    variablesLocales.clear();
+    
+    for (size_t i = 0; i < stm->argumentos.size(); i++) {
+        int valorArg = stm->argumentos[i]->accept(this);
+        if (i < funcion->Pnombres.size()) {
+            variablesLocales[funcion->Pnombres[i]] = valorArg;
+        }
+    }
+    
+    hayRetorno = false;
+    funcion->cuerpo->accept(this);
+    
+    int resultado = valorRetorno;
+    
+    variablesLocales = variablesAnteriores;
+    hayRetorno = false;
+    
+    return resultado;
+}
+
 int EVALVisitor::visit(Program* p) {
     for (auto vd : p->vdlist) {
         vd->accept(this);

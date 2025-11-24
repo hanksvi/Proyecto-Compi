@@ -76,6 +76,12 @@ public:
         return (search_rib(x) >= 0);
     }
 
+    // Verifica si una variable existe localmente
+    bool check_local(const string& x) const {
+    if (ribs.empty()) return false;
+    return ribs.back().count(x) > 0;
+}
+
     // Busca y devuelve el valor de una variable
     // Si no existe, devuelve un valor por defecto de T
     T lookup(const string& x) const {

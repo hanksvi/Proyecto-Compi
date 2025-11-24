@@ -1,5 +1,8 @@
 var x: int
+var flag: bool
 
 x = 10
-if x:
+if x.bool:
     echo(1)
+else:
+    echo(0)

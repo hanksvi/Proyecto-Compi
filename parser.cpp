@@ -192,11 +192,23 @@ Stm* Parser::parseStm() {
     Body* tb = nullptr;
     Body* fb = nullptr;
     if(match(Token::ID)){
-        variable = previous->text;
-        match(Token::ASSIGN);
-        e = parseCE();
         
+        variable = previous->text;
+        if(check(Token::LPAREN)) {
+            match(Token::LPAREN);
+            FcallStm* fcall = new FcallStm();
+            fcall->nombre = variable;
+            fcall->argumentos.push_back(parseCE());
+            while(match(Token::COMA)) {
+                fcall->argumentos.push_back(parseCE());
+            }
+            match(Token::RPAREN);
+            return fcall;
+        }
+        else if (match(Token::ASSIGN)){
+        e = parseCE();
         return new AssignStm(variable,e);
+        }
     }
     else if(match(Token::ECHO)){
         match(Token::LPAREN);

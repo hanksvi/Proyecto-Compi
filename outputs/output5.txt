@@ -2,12 +2,24 @@
 Parseo exitoso
 
 === Iniciando impresión del programa ===
-var i: int
-i=5
-while i: 
-  i=i - 1
+var x: int
+var y: bool
+var z: int
+x=5
+y=x.bool
+z=y.int
+echo(z)
 
  ===Iniciando chequeo de tipos===
+Revisión exitosa
+ Chequeo de tipos exitoso
+
+ Generando codigo ensamblador en inputs/input5.s
+Revisión exitosa
+
+ Generando ejecutable 
+1
 
 === STDERR ===
-Error: tipo inválido de condicion while (solo bool).
+Advertencia: tipo de expresión no encontrado
+Advertencia: tipo de expresión no encontrado

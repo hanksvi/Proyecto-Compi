@@ -1,25 +1,4 @@
 === STDOUT ===
-Parseo exitoso
-
-=== Iniciando impresión del programa ===
-var i: int
-i=0
-while i < 5: 
-  echo(i)
-  i=i + 1
-
- ===Iniciando chequeo de tipos===
-Revisión exitosa
- Chequeo de tipos exitoso
-
- Generando codigo ensamblador en inputs/input6.s
-Revisión exitosa
-
- Generando ejecutable 
-0
-1
-2
-3
-4
 
 === STDERR ===
+Error al parsear: Error sintáctico: parseF

@@ -18,6 +18,7 @@ void PrintStm::accept(TypeVisitor* v) { v->visit(this); }
 void ReturnStm::accept(TypeVisitor* v) { v->visit(this); }
 void WhileStm::accept(TypeVisitor* v) { v->visit(this); }
 void IfStm::accept(TypeVisitor* v) { v->visit(this); }
+void FcallStm::accept(TypeVisitor* v) { v->visit(this); }
 
 void VarDec::accept(TypeVisitor* v) { v->visit(this); }
 void FunDec::accept(TypeVisitor* v) { v->visit(this); }
@@ -63,7 +64,17 @@ void TypeChecker::add_function(FunDec* fd) {
     functionDeclarations[fd->nombre] = fd;
 }
 
-
+// Obtener tipo de expresiones
+Type* TypeChecker::getExpressionType(Exp* exp) {
+    auto it = expressionTypes.find(exp);
+    if (it != expressionTypes.end()) {
+        return it->second;
+    }
+    
+    // Si no está en cache, retornar tipo por defecto
+    cerr << "Advertencia: tipo de expresión no encontrado" << endl;
+    return intType;
+}
 
 // ===========================================================
 //   Método principal de verificación
@@ -118,7 +129,7 @@ void TypeChecker::visit(VarDec* v){
     }
 
     for(const auto& id: v->vars){
-        if(env.check(id)){
+        if(env.check_local(id)){
             cerr << "Error: variable '" << id << "' ya declarada." << endl;
             exit(0);
         }
@@ -141,7 +152,6 @@ void TypeChecker::visit(FunDec* f){
         exit(0);
     }
     currentTypeFun = returnType;
-    env.add_level();
     for(int i=0; i<f->Ptipos.size(); i++){
         Type* t = new Type();
         if(!t->set_basic_type(f->Ptipos[i])){
@@ -151,7 +161,7 @@ void TypeChecker::visit(FunDec* f){
         env.add_var(f->Pnombres[i], t);
     }
     f->cuerpo->accept(this);
-    env.remove_level();
+    
 
     // cuenta de variables en funcion
     fun_locales[f->nombre] = parametros + locales;
@@ -245,6 +255,38 @@ void TypeChecker::visit(IfStm* stm){
     }
 }
 
+void TypeChecker::visit(FcallStm* stm){
+    auto it = functions.find(stm->nombre);
+    if (it == functions.end()){
+        cerr << "Error: llamada a función no declarada '" << stm->nombre << "'." << endl;
+        exit(0);
+    }
+
+    FunDec* fd = functionDeclarations[stm->nombre];
+
+    if (stm->argumentos.size() != fd->Ptipos.size()) {
+        cerr << "Error: función '" << stm->nombre << "' espera "
+            << fd->Ptipos.size() << " argumentos, pero se pasaron "
+            << stm->argumentos.size() << "." << endl;
+    exit(0);
+    }
+
+    for(int i=0; i<fd->Ptipos.size();i++){
+        Type* t = new Type();
+        t->set_basic_type(fd->Ptipos[i]);
+        Type* actual = stm->argumentos[i]->accept(this); 
+        if(!t->match(actual)){
+            cerr << "Error: argumento #" << i+1 << " de la función '"
+                << stm->nombre << "' debe ser de tipo "
+                << t->toString()
+                << ", pero se recibió "
+                << actual->toString() << "." << endl;
+             exit(0);
+        }
+    }
+    
+}
+
 // ===========================================================
 //   Expresiones
 // ===========================================================
@@ -252,7 +294,7 @@ void TypeChecker::visit(IfStm* stm){
 Type* TypeChecker::visit(BinaryExp* e) {
     Type* left = e->left->accept(this);
     Type* right = e->right->accept(this);
-
+    Type* resulType = new Type();
     switch (e->op) {
         case PLUS_OP: 
         case MINUS_OP: 
@@ -267,7 +309,7 @@ Type* TypeChecker::visit(BinaryExp* e) {
                 cerr << "Error: operación aritmética requiere operandos tipo valido." << endl;
                 exit(0);
                 }
-            return left;
+            resulType = left;
         case LS_OP:    
         case LSEQ_OP:
         case GR_OP:
@@ -277,23 +319,30 @@ Type* TypeChecker::visit(BinaryExp* e) {
                 cerr << "Error: operación aritmética requiere operandos del mismo tipo." << endl;
                 exit(0);
             }
-            return boolType;
+            resulType= boolType;
         default:
             cerr << "Error: operador binario no soportado." << endl;
             exit(0);
+        
     }
+    expressionTypes[e] = resulType;
+    return resulType;
 }
 
 Type* TypeChecker::visit(NumberExp* e){
+    Type* resultType = new Type();
     if(e->isFloat){
-        return floatType;
+        resultType = floatType;
     }
     else{
-        return intType;
+        resultType = intType;
     }
+    expressionTypes[e] = resultType;
+    return resultType;
 }
 
 Type* TypeChecker::visit(BoolExp* e){
+    expressionTypes[e] = boolType;
     return boolType;
 }
 
@@ -327,14 +376,18 @@ Type* TypeChecker::visit(FcallExp* e){
              exit(0);
         }
     }
+    expressionTypes[e] = it->second;
     return it->second;
 }
+
+
 
 Type* TypeChecker::visit(IdExp* e){
     if(!env.check(e->value)){
         cerr << "Error: variable '" << e->value << "' no declarada." << endl;
         exit(0);
     }
+    expressionTypes[e] = env.lookup(e->value);
     return env.lookup(e->value);
 }
 
@@ -359,6 +412,7 @@ Type* TypeChecker::visit(IfExp* e){
         exit(0);
     }
     locales = a + max(b-a,c-b);
+    expressionTypes[e] = thentype;
     return thentype;
 }
 
@@ -368,5 +422,6 @@ Type* TypeChecker::visit(CastExp* e){
         cerr << "Error: tipo casteo invalido." << endl;
         exit(0);
     }
+    expressionTypes[e] = t;
     return t;
 }

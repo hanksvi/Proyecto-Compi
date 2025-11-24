@@ -3,10 +3,20 @@ Parseo exitoso
 
 === Iniciando impresión del programa ===
 var x: int
-x=10
-return (x)
+var y: bool
+x=0
+y=x.bool
+echo(y)
 
  ===Iniciando chequeo de tipos===
+Revisión exitosa
+ Chequeo de tipos exitoso
+
+ Generando codigo ensamblador en inputs/input2.s
+Revisión exitosa
+
+ Generando ejecutable 
+0
 
 === STDERR ===
-Error: 'return' fuera de una funcion.
+Advertencia: tipo de expresión no encontrado

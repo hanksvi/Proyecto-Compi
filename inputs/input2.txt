@@ -1,4 +1,6 @@
 var x: int
+var y: bool
 
-x = 10
-return(x)
+x = 0
+y = x.bool
+echo(y)

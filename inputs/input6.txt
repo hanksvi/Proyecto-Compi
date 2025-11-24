@@ -1,6 +1,5 @@
-var i: int
+var x, y: int
 
-i = 0
-while i < 5:
-    echo(i)
-    i = i + 1
+x = -5
+y = if x < 0: 100 else: 200
+echo(y)

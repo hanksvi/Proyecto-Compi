@@ -145,7 +145,15 @@ public:
     ~WhileStm(){};
 };
 
-
+class FcallStm: public Stm{
+public:
+    string nombre;
+    vector<Exp*> argumentos;
+    int accept(Visitor* visitor);
+    void accept(TypeVisitor* visitor);
+    FcallStm(){};
+    ~FcallStm(){};
+};
 
 class AssignStm: public Stm {
 public:
