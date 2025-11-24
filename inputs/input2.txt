@@ -1,5 +1,4 @@
-proc suma(a: int, b: int): int =
-    echo(a + b)
-    return()
+var x: int
 
-suma(2,4)
+x = 10
+return(x)

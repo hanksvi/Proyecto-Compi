@@ -60,6 +60,7 @@ void TypeChecker::add_function(FunDec* fd) {
     }
 
     functions[fd->nombre] = returnType;
+    functionDeclarations[fd->nombre] = fd;
 }
 
 
@@ -251,6 +252,11 @@ Type* TypeChecker::visit(BinaryExp* e) {
                 cerr << "Error: operación aritmética requiere operandos del mismo tipo." << endl;
                 exit(0);
             }
+            if (!(left->match(intType) || left->match(floatType) || left->match(int32Type) 
+                    || left->match(float32Type) || left->match(uintType) || left->match(uint32Type))){
+                cerr << "Error: operación aritmética requiere operandos tipo valido." << endl;
+                exit(0);
+                }
             return left;
         case LS_OP:    
         case LSEQ_OP:
@@ -287,6 +293,29 @@ Type* TypeChecker::visit(FcallExp* e){
     if (it == functions.end()){
         cerr << "Error: llamada a función no declarada '" << e->nombre << "'." << endl;
         exit(0);
+    }
+
+    FunDec* fd = functionDeclarations[e->nombre];
+
+    if (e->argumentos.size() != fd->Ptipos.size()) {
+        cerr << "Error: función '" << e->nombre << "' espera "
+            << fd->Ptipos.size() << " argumentos, pero se pasaron "
+            << e->argumentos.size() << "." << endl;
+    exit(0);
+    }
+
+    for(int i=0; i<fd->Ptipos.size();i++){
+        Type* t = new Type();
+        t->set_basic_type(fd->Ptipos[i]);
+        Type* actual = e->argumentos[i]->accept(this); 
+        if(!t->match(actual)){
+            cerr << "Error: argumento #" << i+1 << " de la función '"
+                << e->nombre << "' debe ser de tipo "
+                << t->toString()
+                << ", pero se recibió "
+                << actual->toString() << "." << endl;
+             exit(0);
+        }
     }
     return it->second;
 }

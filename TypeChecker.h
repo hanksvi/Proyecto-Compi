@@ -60,7 +60,7 @@ class TypeChecker : public TypeVisitor {
 private:
     Environment<Type*> env;                 // Entorno de variables y sus tipos
     unordered_map<string, Type*> functions; // Entorno de funciones
-
+    unordered_map<string, FunDec*> functionDeclarations;
     // Tipos básicos
     Type* intType;
     Type* boolType;

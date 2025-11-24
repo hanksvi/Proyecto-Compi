@@ -1,4 +1,12 @@
 === STDOUT ===
+Parseo exitoso
+
+=== Iniciando impresión del programa ===
+var x: int
+x=10
+return (x)
+
+ ===Iniciando chequeo de tipos===
 
 === STDERR ===
-Error al parsear: Error sintáctico: parseF
+Error: 'return' fuera de una funcion.
