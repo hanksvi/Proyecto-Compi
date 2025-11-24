@@ -1,13 +1,16 @@
 Scanner
 
-TOKEN(ID, "fun")
-TOKEN(ID, "int")
-TOKEN(ID, "main")
-TOKEN(LPAREN, "(")
-TOKEN(RPAREN, ")")
-TOKEN(NEWLINE, "")
-TOKEN(INDENT, "")
 TOKEN(VAR, "var")
+TOKEN(ID, "x")
+TOKEN(COLON, ":")
 TOKEN(ID, "int")
-TOKEN(ID, "i")
+TOKEN(NEWLINE, "")
+TOKEN(ID, "x")
+TOKEN(ASSIGN, "=")
+TOKEN(ID, "y")
+TOKEN(NEWLINE, "")
+TOKEN(NEWLINE, "")
+TOKEN(END)
+
+Scanner exitoso
 

@@ -31,13 +31,17 @@ Stmt ::= id '=' CExp
 
   | 'return' [CExp]
 
-CExp ::= Exp (('<' | '<=' | '==' | '>=' | '>') Exp)?
+CExp ::= IfExp (('<' | '<=' | '==' | '>=' | '>') IfExp)?
+
+IfExp ::= 'if' CExp ':' Exp 'else' ':' Exp | Exp
 
 Exp ::= Term (('+' | '-') Term)*
 
 Term ::= Factor (('*' | '/') Factor)*
 
-Factor ::= id | Num | Bool | '(' Exp ')' | id '(' [ArgList] ')' 
+Factor ::= CastExpr | id | Num | Bool | '(' Exp ')' | id '(' [ArgList] ')' 
+
+CastExpr ::= Type '(' CExp ')'
 
 ArgList ::= CExp (',' CExp)*
 

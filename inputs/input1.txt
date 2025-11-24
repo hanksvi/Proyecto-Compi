@@ -1,6 +1,10 @@
-var nota: int
-var calificacion: string
 
-nota = 85
-calificacion = if nota >= 90: "A" else: if nota >= 80: "B" else: "C"
-echo(calificacion)
+var a: int
+a = 10
+
+if a == 10:
+    echo(1)
+if a == 5:
+    echo(2)
+else:
+    echo(3)

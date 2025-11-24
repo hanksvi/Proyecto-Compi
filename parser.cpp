@@ -119,6 +119,7 @@ FunDec *Parser::parseFunDec() {
         match(Token::COLON);
         match(Token::ID);
         fd->Ptipos.push_back(previous->text);
+
         while(match(Token::COMA)) {
             match(Token::ID);
             fd->Pnombres.push_back(previous->text);
@@ -135,23 +136,36 @@ FunDec *Parser::parseFunDec() {
     match(Token::NEWLINE);
     match(Token::INDENT);
     fd->cuerpo = parseBody();
+    while (match(Token::NEWLINE)) {
+    }
     match(Token::DEDENT);
     return fd;
 }
 
 
 
-Body* Parser::parseBody(){
-    
+Body* Parser::parseBody() {
     Body* b = new Body();
-    if(check(Token::VAR)) {
+
+    // --- Declaraciones ---
+    if (check(Token::VAR)) {
         b->declarations.push_back(parseVarDec());
         while(match(Token::NEWLINE)) {
             skipEmptyLines();
             if(check(Token::VAR)) {
                 b->declarations.push_back(parseVarDec());
+            } else {
+                break;
             }
         }
+    }
+    skipEmptyLines();
+
+    // --- Primer statement obligatorio ---
+    if (!(check(Token::ID) || check(Token::ECHO) ||
+          check(Token::IF) || check(Token::WHILE) ||
+          check(Token::RETURN))) {
+        throw runtime_error("Error sintáctico: se esperaba una sentencia en el cuerpo");
     }
     b->StmList.push_back(parseStm());
     
@@ -166,9 +180,10 @@ Body* Parser::parseBody(){
             break;
         }
     }
-    
+
     return b;
 }
+
 
 Stm* Parser::parseStm() {
     Stm* a;
@@ -177,11 +192,23 @@ Stm* Parser::parseStm() {
     Body* tb = nullptr;
     Body* fb = nullptr;
     if(match(Token::ID)){
-        variable = previous->text;
-        match(Token::ASSIGN);
-        e = parseCE();
         
+        variable = previous->text;
+        if(check(Token::LPAREN)) {
+            match(Token::LPAREN);
+            FcallStm* fcall = new FcallStm();
+            fcall->nombre = variable;
+            fcall->argumentos.push_back(parseCE());
+            while(match(Token::COMA)) {
+                fcall->argumentos.push_back(parseCE());
+            }
+            match(Token::RPAREN);
+            return fcall;
+        }
+        else if (match(Token::ASSIGN)){
+        e = parseCE();
         return new AssignStm(variable,e);
+        }
     }
     else if(match(Token::ECHO)){
         match(Token::LPAREN);
@@ -205,6 +232,9 @@ Stm* Parser::parseStm() {
             exit(1);
         }
         tb = parseBody();
+        while (match(Token::NEWLINE)) {
+            
+        }
         if (!match(Token::DEDENT)) {
             cout << "Error: se esperaba 'cierre de indentacion de if' después de la expresión." << endl;
             exit(1);
@@ -218,6 +248,9 @@ Stm* Parser::parseStm() {
             exit(1);
             }
             fb = parseBody();
+            while (match(Token::NEWLINE)) {
+            
+            }
             if (!match(Token::DEDENT)) {
             cout << "Error: se esperaba 'cierre de indentacion de else' después de la expresión." << endl;
             exit(1);
@@ -348,13 +381,23 @@ Exp* Parser::parseF() {
 
         return new NumberExp(stoi(previous->text));
     }
+    else if (match(Token::TRUE))
+    {
+        BoolExp* e = new BoolExp();
+        e->valor = 1;
+        return e;
+    }
+    else if (match(Token::FALSE))
+    {
+        BoolExp* e = new BoolExp();
+        e->valor = 0;
+        return e;
+    }
     else if(match(Token::FLOAT)){
         cout<<stod(previous->text)<<endl;
         return new NumberExp(stod(previous->text));
     }
-    else if (match(Token::STRING)) {
-        return new StringExp(previous->text);
-    }
+    
     else if (match(Token::TRUE)) {
         return new NumberExp(1);
     }

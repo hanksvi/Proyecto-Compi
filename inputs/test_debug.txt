@@ -1,0 +1,5 @@
+var x: bool
+
+x   =   true  
+
+echo(x)

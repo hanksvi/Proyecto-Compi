@@ -1,4 +1,11 @@
 === STDOUT ===
+Parseo exitoso
+
+=== Iniciando impresión del programa ===
+var x: int
+x=y
+
+ ===Iniciando chequeo de tipos===
 
 === STDERR ===
-free(): invalid pointer
+Error: variable 'y' no declarada.

@@ -1,4 +1,19 @@
 === STDOUT ===
+Parseo exitoso
+
+=== Iniciando impresión del programa ===
+var x: int
+x=3 + 4 * 2 - 10 / 5
+echo(x)
+
+ ===Iniciando chequeo de tipos===
+Revisión exitosa
+ Chequeo de tipos exitoso
+
+ Generando codigo ensamblador en inputs/input2.s
+Revisión exitosa
+
+ Generando ejecutable 
+12
 
 === STDERR ===
-free(): invalid pointer

@@ -2,10 +2,24 @@
 Parseo exitoso
 
 === Iniciando impresión del programa ===
-var x: int
-x=100
-echo(ifx > 50: "grande" else: "pequeño")
+var a: int
+a=10
+if a == 10: 
+  echo(1)
+if a == 5: 
+  echo(2)
+else: 
+  echo(3)
 
-=== Generando codigo ensamblador en inputs/input1.s ===
+ ===Iniciando chequeo de tipos===
+Revisión exitosa
+ Chequeo de tipos exitoso
+
+ Generando codigo ensamblador en inputs/input1.s
+Revisión exitosa
+
+ Generando ejecutable 
+1
+3
 
 === STDERR ===

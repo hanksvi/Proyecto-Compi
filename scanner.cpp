@@ -6,23 +6,23 @@
 #include <vector>
 using namespace std;
 
-// -----------------------------
+//
 // Constructor
-// -----------------------------
+//
 Scanner::Scanner(const char* s): input(s), first(0), current(0), indentStack({0}), LineStart(true), pendingDedent(0) { 
     }
 
-// -----------------------------
+//
 // Función auxiliar
-// -----------------------------
+
 
 bool is_white_space(char c) {
     return c == ' ' || c == '\n' || c == '\r' || c == '\t';
 }
 
-// -----------------------------
+//
 // nextToken: obtiene el siguiente token
-// -----------------------------
+//
 
 
 Token* Scanner::nextToken() {
@@ -33,7 +33,7 @@ Token* Scanner::nextToken() {
     }
     
     while (current < input.length() && input[current] == '\r') {
-    current++;
+        current++;
     }   
 
     // Salto de linea
@@ -43,15 +43,21 @@ Token* Scanner::nextToken() {
         return new Token(Token::NEWLINE);
     }
 
-    
-
     if(LineStart){
         int count = 0;
-        while (current <input.length() && input[current] == ' '){
+        while (current < input.length() && input[current] == ' '){
             count++;
             current++;
         }
         LineStart = false;
+        
+        // Si encontramos una línea vacía (solo espacios y newline), ignorar
+        if (current < input.length() && input[current] == '\n') {
+            current++;
+            LineStart = true;
+            return nextToken(); // Recursivamente obtener el siguiente token
+        }
+        
         int lasIdent = indentStack.back();
         if(count > lasIdent){
             indentStack.push_back(count);
@@ -69,14 +75,19 @@ Token* Scanner::nextToken() {
         }
     }
 
-     while (current < input.length() && (input[current] == ' ' || input[current] == '\t' || input[current] == '\r'))
+    while (current < input.length() && (input[current] == ' ' || input[current] == '\t' || input[current] == '\r'))
         current++;
 
     // Fin de la entrada
     if (current >= input.length()) 
         return new Token(Token::END);
 
-
+    // Después de saltar espacios, verificar si hay un salto de línea
+    if (current < input.length() && input[current] == '\n') {
+        LineStart = true;
+        current++;
+        return new Token(Token::NEWLINE);
+    }
 
     first = current;
     char c = input[current];
@@ -86,7 +97,7 @@ Token* Scanner::nextToken() {
         while (current < input.length() && isdigit(input[current]))
             current++;
         
-        if(input[current] == '.' && isdigit(input[current + 1])){
+        if(current < input.length() && input[current] == '.' && current + 1 < input.length() && isdigit(input[current + 1])){
             current++;
             while (current < input.length() && isdigit(input[current]))
                 current++;
@@ -95,25 +106,10 @@ Token* Scanner::nextToken() {
         else{
             token = new Token(Token::NUM, input, first, current - first);
         }
+        return token;
         
     }
 
-    // STRING
-    else if(c == '"'){
-        first = current;
-        current++;
-        string str = "";
-        
-        while(current < input.length() && input[current] != '"'){
-            str += input[current];
-            current++;
-        }
-        if(current >= input.length()){
-            return new Token(Token::ERR, input, first, current - first);
-        }
-        current++;
-        return new Token(Token::STRING, input, first, current-first);
-    }
     // ID
     else if (isalpha(c)) {
         current++;
@@ -138,7 +134,7 @@ Token* Scanner::nextToken() {
     else if (strchr("+/-*();=:<>,.", c)) {
         switch (c) {
             case '<': 
-            if (input[current+1]=='=')
+            if (current + 1 < input.length() && input[current+1]=='=')
             {
                 current++;
                 token = new Token(Token::LSEQ, input, first, current + 1 - first);
@@ -147,7 +143,7 @@ Token* Scanner::nextToken() {
                 token = new Token(Token::LS,   c);
             }break;
             case '>': 
-            if (input[current+1]=='=')
+            if (current + 1 < input.length() && input[current+1]=='=')
             {
                 current++;
                 token = new Token(Token::GREQ, input, first, current + 1 - first);
@@ -160,7 +156,7 @@ Token* Scanner::nextToken() {
             case '-': token = new Token(Token::MINUS, c); break;
             case ':': token = new Token(Token::COLON, c); break;
             case '*': 
-            if (input[current+1]=='*')
+            if (current + 1 < input.length() && input[current+1]=='*')
             {
                 current++;
                 token = new Token(Token::POW, input, first, current + 1 - first);
@@ -173,7 +169,7 @@ Token* Scanner::nextToken() {
             case '(': token = new Token(Token::LPAREN,c); break;
             case ')': token = new Token(Token::RPAREN,c); break;
             case '=':
-            if (input[current+1]=='=')
+            if (current + 1 < input.length() && input[current+1]=='=')
             {
                 current++;
                 token = new Token(Token::EQ, input, first, current + 1 - first);
@@ -185,12 +181,14 @@ Token* Scanner::nextToken() {
 
         }
         current++;
+        return token;
     }
 
     // Carácter inválido
     else {
         token = new Token(Token::ERR, c);
         current++;
+        return token;
     }
 
     return token;
@@ -199,14 +197,14 @@ Token* Scanner::nextToken() {
 
 
 
-// -----------------------------
+//
 // Destructor
-// -----------------------------
+//
 Scanner::~Scanner() { }
 
-// -----------------------------
+//
 // Función de prueba
-// -----------------------------
+//
 
 int ejecutar_scanner(Scanner* scanner, const string& InputFile) {
     Token* tok;

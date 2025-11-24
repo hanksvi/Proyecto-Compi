@@ -1,4 +1,12 @@
 === STDOUT ===
+Parseo exitoso
+
+=== Iniciando impresión del programa ===
+var x: int
+var y: float
+x=y
+
+ ===Iniciando chequeo de tipos===
 
 === STDERR ===
-free(): invalid pointer
+Error: tipos incompatibles en asignacion a x (debe ser tipo int).
