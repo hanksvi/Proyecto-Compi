@@ -373,9 +373,7 @@ Exp* Parser::parseF() {
         cout<<stod(previous->text)<<endl;
         return new NumberExp(stod(previous->text));
     }
-    else if (match(Token::STRING)) {
-        return new StringExp(previous->text);
-    }
+    
     else if (match(Token::TRUE)) {
         return new NumberExp(1);
     }

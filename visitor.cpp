@@ -31,9 +31,7 @@ int CastExp::accept(Visitor* visitor) {
     return visitor->visit(this);
 }
 
-int StringExp::accept(Visitor* visitor) {
-    return visitor->visit(this);
-}
+
 
 int PrintStm::accept(Visitor* visitor) {
     return visitor->visit(this);
@@ -265,10 +263,7 @@ int GenCodeVisitor::visit(CastExp* exp){
 }
 
 
-int GenCodeVisitor::visit(StringExp* exp) {   
-    
-    return 0;
-}
+
 
 
 //////////////////////////////////////////////////////////
@@ -287,10 +282,7 @@ int PrintVisitor::visit(IdExp* exp) {
     return 0;
 }
 
-int PrintVisitor::visit(StringExp* exp) {   
-    cout << exp->value;
-    return 0;
-}
+
 
 int PrintVisitor::visit(IfExp* exp){
     cout<<"if ";
@@ -501,9 +493,7 @@ int EVALVisitor::visit(IfExp* exp) {
     }
     return 0;
 };
-int EVALVisitor::visit(StringExp* exp) {
-    return 0;
-};
+
 
 int EVALVisitor::visit(CastExp* exp) {
     double valor = exp->e->accept(this);
@@ -695,9 +685,7 @@ int TypeCheckerVisitor::visit(BinaryExp* exp) {
 int TypeCheckerVisitor::visit(IfExp* exp) {
     return 0;
 };
-int TypeCheckerVisitor::visit(StringExp* exp) {
-    return 0;
-};
+
 
 int TypeCheckerVisitor::visit(CastExp* exp) {
     return 0;

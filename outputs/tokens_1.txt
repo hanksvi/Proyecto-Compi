@@ -17,13 +17,8 @@ TOKEN(ID, "x")
 TOKEN(GR, ">")
 TOKEN(NUM, "50")
 TOKEN(COLON, ":")
-TOKEN(STRING, ""grande"")
-TOKEN(ELSE, "else")
-TOKEN(COLON, ":")
-TOKEN(STRING, ""pequeño"")
-TOKEN(RPAREN, ")")
-TOKEN(NEWLINE, "")
-TOKEN(END)
+TOKEN(ERR, """)
+Caracter invalido
 
-Scanner exitoso
+Scanner no exitoso
 

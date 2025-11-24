@@ -64,14 +64,7 @@ public:
     ~IdExp();
 };
 
-class StringExp : public Exp {
-public:
-    string value;
-    
-    StringExp(string v) : value(v) {}
-    int accept(Visitor* visitor);
-    ~StringExp() {}
-};
+
 
 class IfExp: public Exp {
 public:
