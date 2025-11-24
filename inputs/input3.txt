@@ -1,10 +1,9 @@
-var res: int
+var a,b: int
+a = 1
+b = 0
 
-proc main(): int =
-    var a: int
-    a = 10
-    if a < 20:
-        echo(a)
-    return(0)
-
-res = main()
+if a:
+    if b:
+        echo(100)
+    echo(200)
+echo(300)

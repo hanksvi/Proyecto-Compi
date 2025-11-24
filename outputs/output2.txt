@@ -1,19 +1,13 @@
 === STDOUT ===
+3.14
 Parseo exitoso
 
 === Iniciando impresión del programa ===
-var a,b: int
-var r: int
-proc mayor(x:int, y:int): int = 
-  if x > y: 
-    echo(x)
-    return (x)
-  else: 
-    echo(y)
-    return (y)
-a=15
-b=9
-r=mayor(a,b)
+var x: int
+var y: float
+x=5
+y=3.14
+x=y
 
  Iniciando chequeo de tipos
 
@@ -24,8 +18,6 @@ No se encontraron errores de tipos
  Generando codigo ensamblador en inputs/input2.s
 
  Generando ejecutable 
-15
 Resultado del programa (EVAL): 0
 
 === STDERR ===
-free(): invalid pointer

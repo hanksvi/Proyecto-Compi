@@ -3,8 +3,10 @@ Parseo exitoso
 
 === Iniciando impresión del programa ===
 var x: int
-x=100
-echo(ifx > 50: "grande" else: "pequeño")
+var y: int
+x=10
+y=x + 5
+echo(y)
 
  Iniciando chequeo de tipos
 
@@ -15,6 +17,7 @@ No se encontraron errores de tipos
  Generando codigo ensamblador en inputs/input1.s
 
  Generando ejecutable 
+15
 Resultado del programa (EVAL): 0
 
 === STDERR ===

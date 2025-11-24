@@ -1,14 +1,5 @@
-var a, b: int
-var r: int
-
-proc mayor(x:int, y:int): int =
-    if x > y:
-        echo(x)
-        return x
-    else:
-        echo(y)
-        return y
-
-a = 15
-b = 9
-r = mayor(a, b)
+var x: int
+var y: float
+x = 5
+y = 3.14
+x = y

@@ -1,4 +1,5 @@
 var x: int
-
-x = 100
-echo(if x > 50: "grande" else: "pequeño")
+var y: int
+x = 10
+y = x + 5
+echo(y)

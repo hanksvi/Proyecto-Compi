@@ -1,26 +1,27 @@
 .data
 print_fmt: .string "%ld \n"
-res: .quad 0
+b: .quad 0
+a: .quad 0
 .text
-.globl main
-main:
- pushq %rbp
- movq %rsp, %rbp
- subq $8, %rsp
- movq $10, %rax
- movq %rax, -8(%rbp)
- movq -8(%rbp), %rax
- pushq %rax
- movq $20, %rax
- movq %rax, %rcx
- popq %rax
- cmpq %rcx, %rax
- movl $0, %eax
- setle %al
- movzbq %al, %rax
+ movq $1, %rax
+ movq %rax, a(%rip)
+ movq $0, %rax
+ movq %rax, b(%rip)
+ movq a(%rip), %rax
  cmpq $0, %rax
  je else_0
- movq -8(%rbp), %rax
+ movq b(%rip), %rax
+ cmpq $0, %rax
+ je else_1
+ movq $100, %rax
+ movq %rax, %rsi
+ leaq print_fmt(%rip), %rdi
+ movl $0, %eax
+ call printf@PLT
+ jmp endif_1
+ else_1:
+endif_1:
+ movq $200, %rax
  movq %rax, %rsi
  leaq print_fmt(%rip), %rdi
  movl $0, %eax
@@ -28,9 +29,9 @@ main:
  jmp endif_0
  else_0:
 endif_0:
- movq $0, %rax
- jmp .end_main
-.end_main:
-leave
-ret
+ movq $300, %rax
+ movq %rax, %rsi
+ leaq print_fmt(%rip), %rdi
+ movl $0, %eax
+ call printf@PLT
 .section .note.GNU-stack,"",@progbits

@@ -1,14 +1,11 @@
-var x, y: int
-var res: int
+var i: int
+var suma: int
 
-x = 5
-y = 12
+i = 0
+suma = 0
 
-if x < y:
-    echo(x)
-    res = y
-else:
-    echo(y)
-    res = x
+while (i < 5):
+    suma = suma + i
+    i = i + 1
 
-echo(res)
+echo(suma)

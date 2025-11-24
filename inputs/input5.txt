@@ -1,18 +1,5 @@
-var a, b, c: int
+proc f(a:int): int =
+    return "hola"      // ERROR de tipos
 
-proc cuadrado(x:int): int =
-    return(x * x)
-
-proc suma(a:int, b:int): int =
-    return(a + b)
-
-proc operacion(x:int, y:int): int =
-    var m: int
-    m = cuadrado(x)
-    m = m + suma(x, y)
-    return(m)
-
-a = 3
-b = 4
-c = operacion(a, b)
-echo(c)
+var x: int
+x = f(3)

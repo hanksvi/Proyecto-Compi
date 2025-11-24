@@ -2,14 +2,14 @@
 Parseo exitoso
 
 === Iniciando impresión del programa ===
-var res: int
-proc main(): int = 
-  var a: int
-  a=10
-  if a < 20: 
-    echo(a)
-  return (0)
-res=main()
+var a,b: int
+a=1
+b=0
+if a: 
+  if b: 
+    echo(100)
+  echo(200)
+echo(300)
 
  Iniciando chequeo de tipos
 
@@ -20,8 +20,8 @@ No se encontraron errores de tipos
  Generando codigo ensamblador en inputs/input3.s
 
  Generando ejecutable 
-10
+200
+300
 Resultado del programa (EVAL): 0
 
 === STDERR ===
-free(): invalid pointer
