@@ -469,6 +469,13 @@ int EVALVisitor::visit(IdExp* exp) {
         return 0;
     }
 }
+
+int EVALVisitor::visit(StringExp* exp) {
+    // Para el interprete, las strings no tienen un valor numérico
+    // Retornamos 0 por defecto
+    return 0;
+}
+
 int EVALVisitor::visit(BinaryExp* exp) {
     int izq = exp->left->accept(this);
     int der = exp->right->accept(this);
@@ -610,6 +617,22 @@ int EVALVisitor::visit(Program* p) {
     
     return 0;
 }
+
+int EVALVisitor::visit(IfExp* exp) {
+    int condicion = exp->condicion->accept(this);
+    if (condicion != 0) {
+        return exp->then->accept(this);
+    } else {
+        return exp->els->accept(this);
+    }
+}
+
+int EVALVisitor::visit(CastExp* exp) {
+    // Para el cast, simplemente evaluamos la expresión base
+    // La conversión de tipos podría implementarse aquí
+    return exp->e->accept(this);
+}
+
 void EVALVisitor::interprete(Program* programa) {
     if (programa) {
         variablesGlobales.clear();
@@ -814,6 +837,31 @@ int TypeCheckerVisitor::visit(Program* p) {
     p->cuerpo->accept(this);
     
     return 0;
+}
+
+int TypeCheckerVisitor::visit(StringExp* exp) {
+    return 0; // Las strings son válidas
+}
+
+int TypeCheckerVisitor::visit(IfExp* exp) {
+    int condicion = exp->condicion->accept(this);
+    int then_result = exp->then->accept(this);
+    int else_result = exp->els->accept(this);
+    
+    if (condicion == -1 || then_result == -1 || else_result == -1) {
+        return -1;
+    }
+    
+    return 0;
+}
+
+int TypeCheckerVisitor::visit(CastExp* exp) {
+    // Verificar que la expresión base sea válida
+    int resultado = exp->e->accept(this);
+    
+    // Aquí podríamos agregar validación de tipos de cast
+    // Por ahora solo verificamos que la expresión sea válida
+    return resultado;
 }
 
 void TypeCheckerVisitor::check(Program* program) {
