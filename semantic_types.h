@@ -5,9 +5,9 @@
 #include <string>
 using namespace std;
 
-// ===========================================================
+
 //  Representación de tipos básicos del lenguaje
-// ===========================================================
+
 
 class Type {
 public:
