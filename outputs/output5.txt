@@ -1,4 +1,35 @@
 === STDOUT ===
+Parseo exitoso
+
+=== Iniciando impresión del programa ===
+var a,b,c: int
+proc cuadrado(x:int): int = 
+  return (x * x)
+proc suma(a:int, b:int): int = 
+  return (a + b)
+proc operacion(x:int, y:int): int = 
+  var m: int
+  m=cuadrado(x)
+  m=m + suma(x,y)
+  return (m)
+a=3
+b=4
+c=operacion(a,b)
+echo(c)
+
+ Iniciando chequeo de tipos
+
+ Verificación de tipos
+No se encontraron errores de tipos
+ Chequeo de tipos exitoso
+
+ Generando codigo ensamblador en inputs/input5.s
+
+ Generando ejecutable 
+0
+Resultado del programa (EVAL): 0
 
 === STDERR ===
-free(): invalid pointer
+Error: variable 'x' no declarada
+Error: variable 'x' no declarada
+Error: variable 'y' no declarada

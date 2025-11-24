@@ -33,4 +33,6 @@ endif_0:
 .end_main:
 leave
 ret
+call main
+ movq %rax, res(%rip)
 .section .note.GNU-stack,"",@progbits

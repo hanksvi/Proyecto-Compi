@@ -64,4 +64,19 @@ call suma
 .end_operacion:
 leave
 ret
+ movq $3, %rax
+ movq %rax, a(%rip)
+ movq $4, %rax
+ movq %rax, b(%rip)
+ movq a(%rip), %rax
+ mov %rax, %rdi
+ movq b(%rip), %rax
+ mov %rax, %rsi
+call operacion
+ movq %rax, c(%rip)
+ movq c(%rip), %rax
+ movq %rax, %rsi
+ leaq print_fmt(%rip), %rdi
+ movl $0, %eax
+ call printf@PLT
 .section .note.GNU-stack,"",@progbits

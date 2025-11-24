@@ -492,6 +492,35 @@ int EVALVisitor::visit(BinaryExp* exp) {
     }
 }
 
+int EVALVisitor::visit(IfExp* exp) {
+    if(exp->condicion->accept(this)){
+        exp->then->accept(this);
+    }
+    else if(exp->els != nullptr){
+        exp->els->accept(this);
+    }
+    return 0;
+};
+int EVALVisitor::visit(StringExp* exp) {
+    return 0;
+};
+
+int EVALVisitor::visit(CastExp* exp) {
+    double valor = exp->e->accept(this);
+    if(exp->tipo == "int"){
+        return (int)valor;
+    }
+    else if(exp->tipo == "float"){
+        return valor;
+    }
+    else if(exp->tipo == "bool"){
+        return (valor !=0) ? 1: 0;
+    }
+    cerr << "Error: cast a tipo '" << exp->tipo << "' no soportado" << endl;
+    return 0;
+};
+
+
 int EVALVisitor::visit(AssignStm* stm) {
     int valor = stm->e->accept(this);
     
@@ -662,6 +691,18 @@ int TypeCheckerVisitor::visit(BinaryExp* exp) {
     
     return 0; 
 }
+
+int TypeCheckerVisitor::visit(IfExp* exp) {
+    return 0;
+};
+int TypeCheckerVisitor::visit(StringExp* exp) {
+    return 0;
+};
+
+int TypeCheckerVisitor::visit(CastExp* exp) {
+    return 0;
+};
+
 
 int TypeCheckerVisitor::visit(AssignStm* stm) {
     if (!tc_tablaVariablesLocales.count(stm->id) && !tc_tablaVariablesGlobales.count(stm->id)) {

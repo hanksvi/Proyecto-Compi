@@ -38,4 +38,14 @@ endif_0:
 .end_mayor:
 leave
 ret
+ movq $15, %rax
+ movq %rax, a(%rip)
+ movq $9, %rax
+ movq %rax, b(%rip)
+ movq a(%rip), %rax
+ mov %rax, %rdi
+ movq b(%rip), %rax
+ mov %rax, %rsi
+call mayor
+ movq %rax, r(%rip)
 .section .note.GNU-stack,"",@progbits

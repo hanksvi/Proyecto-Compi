@@ -108,7 +108,9 @@ public:
     int visit(BinaryExp* exp) override;
     int visit(NumberExp* exp) override;
     int visit(IdExp* exp) override;
+    int visit(IfExp* exp) override;
     int visit(StringExp* exp) override;
+    int visit(CastExp* exp) override;
     int visit(Program* p) override ;
     int visit(PrintStm* stm) override;
     int visit(AssignStm* stm) override;
@@ -130,6 +132,9 @@ public:
     int visit(BinaryExp* exp) override;
     int visit(NumberExp* exp) override;
     int visit(IdExp* exp) override;
+    int visit(IfExp* exp) override;
+    int visit(StringExp* exp) override;
+    int visit(CastExp* exp) override;
     int visit(Program* p) override ;
     int visit(PrintStm* stm) override;
     int visit(AssignStm* stm) override;
