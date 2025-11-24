@@ -111,6 +111,7 @@ void TypeChecker::visit(Body* b) {
 
 void TypeChecker::visit(VarDec* v){
     Type* t = new Type();
+    locales += v->vars.size();
     if (!t->set_basic_type(v->type)){
         cerr << "Error: tipo de variable no válido." << endl;
         exit(0);
@@ -128,6 +129,10 @@ void TypeChecker::visit(VarDec* v){
 void TypeChecker::visit(FunDec* f){
     string previousName = currentNameFun;
     Type* previousType = currentTypeFun;
+
+    // cuenta de variables en funcion
+    int parametros = f->Pnombres.size();
+    locales = 0;
 
     currentNameFun = f->nombre;
     Type* returnType = new Type();
@@ -147,6 +152,11 @@ void TypeChecker::visit(FunDec* f){
     }
     f->cuerpo->accept(this);
     env.remove_level();
+
+    // cuenta de variables en funcion
+    fun_locales[f->nombre] = parametros + locales;
+
+
     currentNameFun = previousName;
     currentTypeFun = previousType;
 }
@@ -329,17 +339,26 @@ Type* TypeChecker::visit(IdExp* e){
 }
 
 Type* TypeChecker::visit(IfExp* e){
+
     Type* ctype = e->condicion->accept(this);
     if(!ctype->match(boolType)){
         cerr << "Error: condición de if-expression debe ser bool."<< endl;
         exit(0);
     }
+    //
+    int a = locales;
+
     Type* thentype = e->then->accept(this);
+    //
+    int b = locales;
     Type* elstype = e->els->accept(this);
+    //
+    int c = locales;
     if(!thentype->match(elstype)){
         cerr << "Error: las ramas del if-expression tienen tipos incompatibles."<< endl;
         exit(0);
     }
+    locales = a + max(b-a,c-b);
     return thentype;
 }
 

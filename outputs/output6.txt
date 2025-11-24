@@ -13,6 +13,7 @@ Revisión exitosa
  Chequeo de tipos exitoso
 
  Generando codigo ensamblador en inputs/input6.s
+Revisión exitosa
 
  Generando ejecutable 
 0

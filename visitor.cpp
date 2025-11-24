@@ -76,18 +76,17 @@ int ReturnStm::accept(Visitor* visitor){
 
 
 int GenCodeVisitor::generar(Program* program) {
+    
+    tipe.typecheck(program);
+    fun_reserva = tipe.fun_locales;
     program->accept(this);
+    
         return 0;
 }
 
-int GenCodeVisitor::visit(BoolExp* exp) {
-    return 0;
-}
-
-
 int GenCodeVisitor::visit(Program* program) {
 out << ".data\nprint_fmt: .string \"%ld \\n\""<<endl;
-
+    env.add_level();
     for (auto dec : program->vdlist){
         dec->accept(this);
     }
@@ -97,21 +96,31 @@ out << ".data\nprint_fmt: .string \"%ld \\n\""<<endl;
     }
 
     out << ".text\n";
-    
+    out << ".globl main\n";
+    out << "main:\n";
+    out << " pushq %rbp\n";
+    out << " movq %rsp, %rbp\n";
     for (auto dec : program->fdlist){
         dec->accept(this);
     }
+
     program->cuerpo->accept(this);
+
+    out << " movl $0, %eax\n";
+    out << " leave\n";
+    out << " ret\n";
+
+    env.remove_level();
     out << ".section .note.GNU-stack,\"\",@progbits"<<endl;
         return 0;
 }
 
-int GenCodeVisitor::visit(VarDec* stm) {
-    for (auto var : stm->vars) {
+int GenCodeVisitor::visit(VarDec* vd) {
+    for (auto var : vd->vars) {
         if (!entornoFuncion) {
             memoriaGlobal[var] = true;
         } else {
-            memoria[var] = offset;
+            env.add_var(var, offset);
             offset -= 8;
         }
     }
@@ -129,7 +138,7 @@ int GenCodeVisitor::visit(IdExp* exp) {
     if (memoriaGlobal.count(exp->value))
         out << " movq " << exp->value << "(%rip), %rax"<<endl;
     else
-        out << " movq " << memoria[exp->value] << "(%rbp), %rax"<<endl;
+        out << " movq " << env.lookup(exp->value) << "(%rbp), %rax"<<endl;
     return 0;
 }
 
@@ -146,7 +155,7 @@ int GenCodeVisitor::visit(BinaryExp* exp) {
         case LS_OP:
             out << " cmpq %rcx, %rax\n"
                       << " movl $0, %eax\n"
-                      << " setle %al\n"
+                      << " setl %al\n"
                       << " movzbq %al, %rax\n";
             break;
     }
@@ -159,7 +168,7 @@ int GenCodeVisitor::visit(AssignStm* stm) {
     if (memoriaGlobal.count(stm->id))
         out << " movq %rax, " << stm->id << "(%rip)"<<endl;
     else
-        out << " movq %rax, " << memoria[stm->id] << "(%rbp)"<<endl;
+        out << " movq %rax, " << env.lookup(stm->id) << "(%rbp)"<<endl;
             return 0;
 }
 
@@ -175,13 +184,15 @@ int GenCodeVisitor::visit(PrintStm* stm) {
 
 
 
-int GenCodeVisitor::visit(Body* b) {
-    for (auto dec : b->declarations){
+int GenCodeVisitor::visit(Body* body) {
+    env.add_level();
+    for (auto dec : body->declarations){
         dec->accept(this);
     }
-    for (auto s : b->StmList){
+    for (auto s : body->StmList){
         s->accept(this);
     }
+    env.remove_level();
         return 0;
 }
 
@@ -211,37 +222,41 @@ int GenCodeVisitor::visit(WhileStm* stm) {
 }
 
 
+
 int GenCodeVisitor::visit(ReturnStm* stm) {
     stm->e->accept(this);
     out << " jmp .end_"<<nombreFuncion << endl;
     return 0;
 }
 
-int GenCodeVisitor::visit(FunDec* f) {
+int GenCodeVisitor::visit(FunDec* fd) {
+    
     entornoFuncion = true;
-    memoria.clear();
+    
     offset = -8;
-    nombreFuncion = f->nombre;
+    nombreFuncion = fd->nombre;
     vector<std::string> argRegs = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
-    out << ".globl " << f->nombre << endl;
-    out << f->nombre <<  ":" << endl;
+    out << ".globl " << fd->nombre << endl;
+    out << fd->nombre <<  ":" << endl;
     out << " pushq %rbp" << endl;
     out << " movq %rsp, %rbp" << endl;
-    int size = f->Pnombres.size();
+    out << " subq $" << fun_reserva[fd->nombre]*8 << ", %rsp" << endl;
+    int size = fd->Pnombres.size();
     for (int i = 0; i < size; i++) {
-        memoria[f->Pnombres[i]]=offset;
+        env.add_var(fd->Pnombres[i], offset);
         out << " movq " << argRegs[i] << "," << offset << "(%rbp)" << endl;
         offset -= 8;
     }
-    for (auto i: f->cuerpo->declarations){
+    for (auto i: fd->cuerpo->declarations){
         i->accept(this);
     }
     int reserva = -offset - 8;
-    out << " subq $" << reserva << ", %rsp" << endl;
-    for (auto i: f->cuerpo->StmList){
+
+    for (auto i: fd->cuerpo->StmList){
         i->accept(this);
     }
-    out << ".end_"<< f->nombre << ":"<< endl;
+    
+    out << ".end_"<< fd->nombre << ":"<< endl;
     out << "leave" << endl;
     out << "ret" << endl;
     entornoFuncion = false;
@@ -259,6 +274,7 @@ int GenCodeVisitor::visit(FcallExp* exp) {
     return 0;
 }
 
+
 int GenCodeVisitor::visit(IfExp* exp){
     
     return 0;
@@ -268,7 +284,9 @@ int GenCodeVisitor::visit(CastExp* exp){
 
     return 0;
 }
-
+int GenCodeVisitor::visit(BoolExp* exp){
+    return 0;
+}
 
 
 

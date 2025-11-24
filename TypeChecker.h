@@ -79,6 +79,8 @@ private:
     void add_function(FunDec* fd);
 
 public:
+    unordered_map<string,int> fun_locales;
+    int locales;
     TypeChecker();
 
     // Método principal de verificación

@@ -5,6 +5,8 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include "environment.h"
+#include "TypeChecker.h"
 using namespace std;
 
 class BinaryExp;
@@ -51,7 +53,9 @@ private:
 public:
     GenCodeVisitor(std::ostream& out) : out(out) {}
     int generar(Program* program);
-    unordered_map<string, int> memoria;
+    Environment<int> env;
+    TypeChecker tipe;
+    unordered_map<string,int> fun_reserva;
     unordered_map<string, bool> memoriaGlobal;
     int offset = -8;
     int labelcont = 0;
@@ -63,17 +67,19 @@ public:
     int visit(IfExp* exp) override;
     int visit(CastExp* exp) override;
     int visit(BoolExp* exp) override;
+    int visit(FcallExp* exp) override;
 
     int visit(Program* p) override ;
+    int visit(Body* body) override;
+    int visit(VarDec* vd) override;
+    int visit(FunDec* fd) override;
+
     int visit(PrintStm* stm) override;
     int visit(AssignStm* stm) override;
     int visit(WhileStm* stm) override;
     int visit(IfStm* stm) override;
-    int visit(Body* body) override;
-    int visit(VarDec* vd) override;
-    int visit(FcallExp* fcall) override;
-    int visit(ReturnStm* r) override;
-    int visit(FunDec* fd) override;
+    int visit(ReturnStm* stm) override;
+    
 };
 
 class PrintVisitor: public Visitor{
@@ -113,7 +119,7 @@ public:
     int visit(IdExp* exp) override;
     int visit(IfExp* exp) override;
     int visit(BoolExp* exp) override;
-    
+
     int visit(CastExp* exp) override;
     int visit(Program* p) override ;
     int visit(PrintStm* stm) override;

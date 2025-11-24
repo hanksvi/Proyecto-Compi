@@ -1,15 +1,19 @@
 === STDOUT ===
-3.14
 Parseo exitoso
 
 === Iniciando impresión del programa ===
 var x: int
-var y: float
-x=5
-y=3.14
-x=y
+x=2
+echo(x)
 
  ===Iniciando chequeo de tipos===
+Revisión exitosa
+ Chequeo de tipos exitoso
+
+ Generando codigo ensamblador en inputs/input1.s
+Revisión exitosa
+
+ Generando ejecutable 
+2
 
 === STDERR ===
-Error: tipos incompatibles en asignacion a x (debe ser tipo int).
