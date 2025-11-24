@@ -2,14 +2,16 @@
 #define AST_H
 
 #include <string>
+#include <unordered_map>
 #include <list>
 #include <ostream>
 #include <vector>
+#include "semantic_types.h"
 using namespace std;
 
 class Visitor;
 class VarDec;
-
+class TypeVisitor;
 // Operadores binarios soportados
 enum BinaryOp { 
     PLUS_OP, 
@@ -28,6 +30,7 @@ enum BinaryOp {
 class Exp {
 public:
     virtual int  accept(Visitor* visitor) = 0;
+    virtual Type* accept(TypeVisitor* visitor) = 0; 
     virtual ~Exp() = 0;  // Destructor puro → clase abstracta
     static string binopToChar(BinaryOp op);  // Conversión operador → string
 };
@@ -39,6 +42,7 @@ public:
     Exp* right;
     BinaryOp op;
     int accept(Visitor* visitor);
+    Type* accept(TypeVisitor* visitor);
     BinaryExp(Exp* l, Exp* r, BinaryOp op);
     ~BinaryExp();
 
@@ -50,6 +54,7 @@ public:
     double value;
     bool isFloat;
     int accept(Visitor* visitor);
+    Type* accept(TypeVisitor* visitor);
     NumberExp(int v);
     NumberExp(double v);
     ~NumberExp();
@@ -60,6 +65,7 @@ class IdExp : public Exp {
 public:
     string value;
     int accept(Visitor* visitor);
+    Type* accept(TypeVisitor* visitor);
     IdExp(string v);
     ~IdExp();
 };
@@ -73,6 +79,7 @@ public:
     Exp* els;
     IfExp(Exp* condicion, Exp* then, Exp* els) : condicion(condicion), then(then), els(els) {};
     int accept(Visitor* visitor);
+    Type* accept(TypeVisitor* visitor);
     ~IfExp(){};
 };
 
@@ -82,12 +89,14 @@ public:
     Exp* e;
     CastExp(string tipo, Exp* exp): tipo(tipo), e(exp){};
     int accept(Visitor* visitor);
+    Type* accept(TypeVisitor* visitor);
     ~CastExp(){};
 };
 
 class Stm{
 public:
     virtual int accept(Visitor* visitor) = 0;
+    virtual void accept(TypeVisitor* visitor) = 0;
     virtual ~Stm() = 0;
 };
 
@@ -97,6 +106,7 @@ public:
     vector<string> vars;
     VarDec();
     int accept(Visitor* visitor);
+    void accept(TypeVisitor* visitor);
     ~VarDec();
 };
 
@@ -106,6 +116,7 @@ public:
     list<Stm*> StmList;
     list<VarDec*> declarations;
     int accept(Visitor* visitor);
+    void accept(TypeVisitor* visitor);
     Body();
     ~Body();
 };
@@ -120,6 +131,7 @@ public:
     Body* els;
     IfStm(Exp* condition, Body* then, Body* els);
     int accept(Visitor* visitor);
+    void accept(TypeVisitor* visitor);
     ~IfStm(){};
 };
 
@@ -129,6 +141,7 @@ public:
     Body* b;
     WhileStm(Exp* condition, Body* b);
     int accept(Visitor* visitor);
+    void accept(TypeVisitor* visitor);
     ~WhileStm(){};
 };
 
@@ -141,6 +154,7 @@ public:
     AssignStm(string, Exp*);
     ~AssignStm();
     int accept(Visitor* visitor);
+    void accept(TypeVisitor* visitor);
 };
 
 class PrintStm: public Stm {
@@ -149,6 +163,7 @@ public:
     PrintStm(Exp*);
     ~PrintStm();
     int accept(Visitor* visitor);
+    void accept(TypeVisitor* visitor);
 };
 
 
@@ -162,6 +177,7 @@ public:
     ReturnStm(){};
     ~ReturnStm(){};
     int accept(Visitor* visitor);
+    void accept(TypeVisitor* visitor);
 };
 
 class FcallExp: public Exp {
@@ -169,11 +185,21 @@ public:
     string nombre;
     vector<Exp*> argumentos;
     int accept(Visitor* visitor);
+    Type* accept(TypeVisitor* visitor);
     FcallExp(){};
     ~FcallExp(){};
 };
 
+class BoolExp : public Exp {
+public:
+    int valor;
 
+    BoolExp(){};
+    ~BoolExp(){};
+
+    int accept(Visitor* visitor);
+    Type* accept(TypeVisitor* visitor); // nuevo
+};
 
 
 class FunDec{
@@ -184,6 +210,7 @@ public:
     vector<string> Ptipos;
     vector<string> Pnombres;
     int accept(Visitor* visitor);
+    void accept(TypeVisitor* visitor);
     FunDec(){};
     ~FunDec(){};
 };
@@ -196,6 +223,7 @@ public:
     Program(){};
     ~Program(){};
     int accept(Visitor* visitor);
+    void accept(TypeVisitor* visitor);
 };
 
 

@@ -369,6 +369,18 @@ Exp* Parser::parseF() {
 
         return new NumberExp(stoi(previous->text));
     }
+    else if (match(Token::TRUE))
+    {
+        BoolExp* e = new BoolExp();
+        e->valor = 1;
+        return e;
+    }
+    else if (match(Token::FALSE))
+    {
+        BoolExp* e = new BoolExp();
+        e->valor = 0;
+        return e;
+    }
     else if(match(Token::FLOAT)){
         cout<<stod(previous->text)<<endl;
         return new NumberExp(stod(previous->text));

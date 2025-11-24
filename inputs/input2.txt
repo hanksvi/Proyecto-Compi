@@ -1,14 +1,5 @@
-var a, b: int
-var r: int
+proc suma(a: int, b: int): int =
+    echo(a + b)
+    return()
 
-proc mayor(x:int, y:int): int =
-    if x > y:
-        echo(x)
-        return x
-    else:
-        echo(y)
-        return y
-
-a = 15
-b = 9
-r = mayor(a, b)
+suma(2,4)

@@ -1,69 +1,33 @@
 .data
 print_fmt: .string "%ld \n"
-res: .quad 0
+i: .quad 0
 .text
-.globl saludo
-saludo:
- pushq %rbp
- movq %rsp, %rbp
- subq $0, %rsp
- movq $1, %rax
- movq %rax, %rsi
- leaq print_fmt(%rip), %rdi
- movl $0, %eax
- call printf@PLT
- movq $2, %rax
- movq %rax, %rsi
- leaq print_fmt(%rip), %rdi
- movl $0, %eax
- call printf@PLT
  movq $0, %rax
- jmp .end_saludo
-.end_saludo:
-leave
-ret
-.globl procesar
-procesar:
- pushq %rbp
- movq %rsp, %rbp
- movq %rdi,-8(%rbp)
- subq $16, %rsp
- movq -8(%rbp), %rax
+ movq %rax, i(%rip)
+while_0:
+ movq i(%rip), %rax
  pushq %rax
- movq $10, %rax
+ movq $5, %rax
  movq %rax, %rcx
  popq %rax
- imulq %rcx, %rax
- movq %rax, -16(%rbp)
- movq -16(%rbp), %rax
+ cmpq %rcx, %rax
+ movl $0, %eax
+ setle %al
+ movzbq %al, %rax
+ cmpq $0, %rax
+ je endwhile_0
+ movq i(%rip), %rax
  movq %rax, %rsi
  leaq print_fmt(%rip), %rdi
  movl $0, %eax
  call printf@PLT
- movq -16(%rbp), %rax
- jmp .end_procesar
-.end_procesar:
-leave
-ret
-.globl main
-main:
- pushq %rbp
- movq %rsp, %rbp
- subq $8, %rsp
- movq $3, %rax
- mov %rax, %rdi
-call procesar
- movq %rax, -8(%rbp)
- movq -8(%rbp), %rax
- movq %rax, %rsi
- leaq print_fmt(%rip), %rdi
- movl $0, %eax
- call printf@PLT
- movq $0, %rax
- jmp .end_main
-.end_main:
-leave
-ret
-call main
- movq %rax, res(%rip)
+ movq i(%rip), %rax
+ pushq %rax
+ movq $1, %rax
+ movq %rax, %rcx
+ popq %rax
+ addq %rcx, %rax
+ movq %rax, i(%rip)
+ jmp while_0
+endwhile_0:
 .section .note.GNU-stack,"",@progbits

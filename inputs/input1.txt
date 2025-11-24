@@ -1,4 +1,6 @@
-var x: int
+proc doble(x: int): int =
+    return(x * 2)
 
-x = 100
-echo(if x > 50: "grande" else: "pequeño")
+var y: float
+y = 3.14
+echo(doble(2.4))

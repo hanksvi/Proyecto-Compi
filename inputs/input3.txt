@@ -1,10 +1,5 @@
-var res: int
+proc imprimir(x: int): void =
+    echo(x)
+    return(x)
 
-proc main(): int =
-    var a: int
-    a = 10
-    if a < 20:
-        echo(a)
-    return(0)
-
-res = main()
+imprimir(2)

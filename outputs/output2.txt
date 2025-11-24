@@ -1,30 +1,4 @@
 === STDOUT ===
-Parseo exitoso
-
-=== Iniciando impresión del programa ===
-var a,b: int
-var r: int
-proc mayor(x:int, y:int): int = 
-  if x > y: 
-    echo(x)
-    return (x)
-  else: 
-    echo(y)
-    return (y)
-a=15
-b=9
-r=mayor(a,b)
-
- Iniciando chequeo de tipos
-
- Verificación de tipos
-No se encontraron errores de tipos
- Chequeo de tipos exitoso
-
- Generando codigo ensamblador en inputs/input2.s
-
- Generando ejecutable 
-15
-Resultado del programa (EVAL): 0
 
 === STDERR ===
+Error al parsear: Error sintáctico: parseF

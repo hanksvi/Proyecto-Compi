@@ -1,18 +1,5 @@
-var a, b, c: int
+var i: int
 
-proc cuadrado(x:int): int =
-    return(x * x)
-
-proc suma(a:int, b:int): int =
-    return(a + b)
-
-proc operacion(x:int, y:int): int =
-    var m: int
-    m = cuadrado(x)
-    m = m + suma(x, y)
-    return(m)
-
-a = 3
-b = 4
-c = operacion(a, b)
-echo(c)
+i = 5
+while i:
+    i = i - 1

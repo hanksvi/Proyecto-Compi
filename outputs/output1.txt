@@ -1,4 +1,22 @@
 === STDOUT ===
+3.14
+2.4
+Parseo exitoso
+
+=== Iniciando impresión del programa ===
+proc doble(x:int): int = 
+  return (x * 2)
+var y: float
+y=3.14
+echo(doble(2.4))
+
+ ===Iniciando chequeo de tipos===
+Revisión exitosa
+ Chequeo de tipos exitoso
+
+ Generando codigo ensamblador en inputs/input1.s
+
+ Generando ejecutable 
+4
 
 === STDERR ===
-Error al parsear: Error lexico

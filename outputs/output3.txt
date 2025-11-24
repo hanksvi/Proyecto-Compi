@@ -2,25 +2,12 @@
 Parseo exitoso
 
 === Iniciando impresión del programa ===
-var res: int
-proc main(): int = 
-  var a: int
-  a=10
-  if a < 20: 
-    echo(a)
-  return (0)
-res=main()
+proc imprimir(x:int): void = 
+  echo(x)
+  return (x)
+imprimir=2
 
- Iniciando chequeo de tipos
-
- Verificación de tipos
-No se encontraron errores de tipos
- Chequeo de tipos exitoso
-
- Generando codigo ensamblador en inputs/input3.s
-
- Generando ejecutable 
-10
-Resultado del programa (EVAL): 0
+ ===Iniciando chequeo de tipos===
 
 === STDERR ===
+Error: funcion imprimir no debe retornar nada (funcion tipo void).
