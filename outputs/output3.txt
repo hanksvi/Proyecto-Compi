@@ -1,4 +1,22 @@
 === STDOUT ===
+Parseo exitoso
+
+=== Iniciando impresión del programa ===
+var x: bool
+var y: int
+x=true
+y=x.int
+echo(y)
+
+ ===Iniciando chequeo de tipos===
+Revisión exitosa
+ Chequeo de tipos exitoso
+
+ Generando codigo ensamblador en inputs/input3.s
+Revisión exitosa
+
+ Generando ejecutable 
+1
 
 === STDERR ===
-free(): invalid pointer
+Advertencia: tipo de expresión no encontrado

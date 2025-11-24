@@ -7,13 +7,9 @@ x: .quad 0
 main:
  pushq %rbp
  movq %rsp, %rbp
- movq $5, %rax
+ movq $1, %rax
  movq %rax, x(%rip)
  movq x(%rip), %rax
- cmpq $0, %rax
- movl $0, %eax
- setne %al
- movzbq %al, %rax
  movq %rax, y(%rip)
  movq y(%rip), %rax
  movq %rax, %rsi

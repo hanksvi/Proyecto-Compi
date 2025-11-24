@@ -1,8 +1,8 @@
-fun int id(int x)
-    return(x)
-endfun
+var x: int
+var y: bool
+var z: int
 
-fun int main()
-    print(id(42));
-    return(0)
-endfun
+x = 5
+y = x.bool
+z = y.int
+echo(z)

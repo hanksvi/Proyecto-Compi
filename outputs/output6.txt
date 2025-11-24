@@ -1,4 +1,4 @@
 === STDOUT ===
 
 === STDERR ===
-free(): invalid pointer
+Error al parsear: Error sintáctico: parseF

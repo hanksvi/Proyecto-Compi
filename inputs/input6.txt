@@ -1,8 +1,5 @@
-fun int doble(int x)
-    return(x + x)
-endfun
+var x, y: int
 
-fun int main()
-    print(doble(21));
-    return(0)
-endfun
+x = -5
+y = if x < 0: 100 else: 200
+echo(y)

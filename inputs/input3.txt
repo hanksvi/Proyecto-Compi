@@ -1,10 +1,6 @@
-fun int main()
-    var int a;
-    a = 10;
-    if a < 5 then
-        print(1)
-    else
-        print(2)
-    endif
-    return(0)
-endfun
+var x: bool
+var y: int
+
+x = true
+y = x.int
+echo(y)

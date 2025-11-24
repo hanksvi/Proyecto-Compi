@@ -43,7 +43,6 @@ public:
         FALSE,
         COLON,
         FLOAT, // 2.4
-        STRING,
         ////////
         ENDWHILE,
         ENDIF,

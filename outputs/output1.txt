@@ -3,9 +3,20 @@ Parseo exitoso
 
 === Iniciando impresión del programa ===
 var x: int
-x=100
-echo(ifx > 50: "grande" else: "pequeño")
+var y: bool
+x=5
+y=x.bool
+echo(y)
 
-=== Generando codigo ensamblador en inputs/input1.s ===
+ ===Iniciando chequeo de tipos===
+Revisión exitosa
+ Chequeo de tipos exitoso
+
+ Generando codigo ensamblador en inputs/input1.s
+Revisión exitosa
+
+ Generando ejecutable 
+1
 
 === STDERR ===
+Advertencia: tipo de expresión no encontrado

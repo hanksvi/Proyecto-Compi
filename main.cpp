@@ -5,7 +5,7 @@
 #include "parser.h"
 #include "ast.h"
 #include "visitor.h"
-
+#include "TypeChecker.h"
 using namespace std;
 
 int main(int argc, const char* argv[]) {
@@ -68,10 +68,25 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
 
-    cout << "\n=== Generando codigo ensamblador en " << outputFilename << " ===\n";
+    try {
+        cout << "\n ===Iniciando chequeo de tipos===\n";
+        TypeChecker tc;
+        tc.typecheck(program);
+        cout << " Chequeo de tipos exitoso\n";
+    } catch (const std::runtime_error& e) {
+        cerr << "Error de tipos: " << e.what() << endl;
+        return 1;    
+    }
+
+    cout << "\n Generando codigo ensamblador en " << outputFilename << "\n";
     GenCodeVisitor codigo(outfile);
     codigo.generar(program);
     outfile.close();
+
+    cout<< "\n Generando ejecutable \n";
+    EVALVisitor ev;
+    int result = program->accept(&ev);
+    
     
     return 0;
 }

@@ -1,9 +1,8 @@
-fun int main()
-    var int i;
-    i = 0;
-    while i < 3 do
-        print(i);
-        i = i + 1
-    endwhile
-    return(0)
-endfun
+var x: int
+var flag: bool
+
+x = 10
+if x.bool:
+    echo(1)
+else:
+    echo(0)

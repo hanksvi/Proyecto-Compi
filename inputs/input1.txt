@@ -1,4 +1,6 @@
 var x: int
+var y: bool
 
-x = 100
-echo(if x > 50: "grande" else: "pequeño")
+x = 5
+y = x.bool
+echo(y)
