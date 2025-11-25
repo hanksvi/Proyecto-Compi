@@ -1,0 +1,6 @@
+proc suma(a:int, b:int): int =
+    var c:int
+    c = a + b
+    return c
+
+echo(suma(5,10))
