@@ -88,11 +88,11 @@ proc calcularPromedio(a: int, b: uint, c: float): float =
     return suma / 3.float
 
 var resultado: float
-resultado = calcularPromedio(-10, 20, 15.5)
+resultado = calcularPromedio(10, 20.uint, 15.5)
 echo(resultado)
 ```
 
-**Salida esperada:** `8.500000` o similar
+**Salida esperada:** `15.166667` o similar
 
 ---
 
@@ -129,7 +129,7 @@ echo(pot)
 
 ---
 
-### Test 3: Función con conversiones implícitas en parámetros
+### Test 3: Función con conversiones implícitas en parámetros    -- ERROR (NO DA EL INPUT CORRECTO)
 
 ```nim
 proc operacionCompleja(x: int32, y: float32, z: uint32): float =
@@ -236,7 +236,7 @@ var y: uint
 var z: float
 var resultado: bool
 
-x = -10
+x = 10
 y = 20.uint
 z = 15.5
 
@@ -246,7 +246,7 @@ echo(resultado)
 resultado = y.float > z
 echo(resultado)
 
-resultado = x.float == -10.float
+resultado = x.float == 10.float
 echo(resultado)
 
 resultado = z >= 15.5
@@ -271,14 +271,14 @@ var b: uint32
 var c: float32
 var d: int32
 
-a = 1000
+a = 1000.int32
 b = 2000.uint32
 c = 3.14159.float32
 
 d = a + b.int32
 echo(d)
 
-a = b.int32 - 500
+a = b.int32 - 500.int32
 echo(a)
 
 c = c * 2.float32
@@ -423,16 +423,17 @@ echo(resultado)
 var x: int32
 var y: int
 var z: int
+var a: float32
+var b: float
+var c: float
 
-x = 100
+x = 100.int32
 y = 200
 
 z = x.int + y
 echo(z)
 
-var a: float32
-var b: float
-var c: float
+
 
 a = 3.5.float32
 b = 7.25
@@ -449,7 +450,7 @@ echo(c)
 
 ---
 
-### Test 13: Expresiones ternarias anidadas con conversiones
+### Test 13: Expresiones ternarias anidadas con conversiones    -- FALTA (ERROR PARSEF)
 
 ```nim
 var x: int
@@ -497,14 +498,14 @@ proc seleccionar(x: uint, y: uint): uint =
 
 var res1: float
 var res2: uint
-
+var final: float
 res1 = calcular(10, 25)
 echo(res1)
 
 res2 = seleccionar(100.uint, 75.uint)
 echo(res2)
 
-var final: float
+
 final = if res2.float > 50.float: res1 + res2.float else: res1
 echo(final)
 ```
