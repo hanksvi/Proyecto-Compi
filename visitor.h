@@ -7,6 +7,7 @@
 #include <string>
 #include "environment.h"
 #include "TypeChecker.h"
+#include <map>
 using namespace std;
 
 class BinaryExp;
@@ -52,21 +53,33 @@ public:
 class GenCodeVisitor : public Visitor {
 private:
     std::ostream& out;
+
 public:
     GenCodeVisitor(std::ostream& out) : out(out) {}
     int generar(Program* program);
     Environment<int> env;
     TypeChecker tipe;
 
+    // nuevo
+    map<string, pair<double, string>> floatConstants;  // label -> (valor, tipo)
+    int floatConstCounter = 0;
+
     // Obtiene el tipo como string
     string obtenerTipoString(Exp* exp);
     
     // Obtiene el tamaño en bytes de un tipo
     int getSizeOfType(const string& typeStr);
+    bool isFloatType(const string& type);
+    bool isUnsignedType(const string& type);
+    bool isFloat64(const string& type);
+    bool isFloat32(const string& type);
+    bool isInt64(const string& type);
+    bool isInt32(const string& type);
 
     unordered_map<string,int> fun_reserva;
     unordered_map<string, bool> memoriaGlobal;
     unordered_map<string, string> variableTypes;  // Guardar tipos de variables locales
+    unordered_map<string, string> globalVariableTypes; // Nuevo mapa para globales
     int offset = -8;
     int labelcont = 0;
     bool entornoFuncion = false;
@@ -102,6 +115,8 @@ private:
             cout<<"  ";
         }
     }
+
+
 public:
     int visit(BinaryExp* exp) override;
     int visit(NumberExp* exp) override;

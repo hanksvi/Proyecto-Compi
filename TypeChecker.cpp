@@ -344,12 +344,23 @@ Type* TypeChecker::visit(BinaryExp* e) {
 
 Type* TypeChecker::visit(NumberExp* e){
     Type* resultType = new Type();
-    if(e->isFloat){
+    
+    // Si tiene tipo específico del cast
+    if (!e->specificType.empty()) {
+        if (!resultType->set_basic_type(e->specificType)) {
+            cerr << "Error: tipo de literal inválido: " << e->specificType << endl;
+            exit(0);
+        }
+    }
+    // Si es float sin tipo específico → float (64-bit por defecto)
+    else if (e->isFloat) {
         resultType = floatType;
     }
-    else{
+    // Si es int sin tipo específico → int (64-bit por defecto)
+    else {
         resultType = intType;
     }
+    
     expressionTypes[e] = resultType;
     return resultType;
 }
@@ -430,11 +441,21 @@ Type* TypeChecker::visit(IfExp* e){
 }
 
 Type* TypeChecker::visit(CastExp* e){
-    Type* t = new Type();
-    if (!t->set_basic_type(e->tipo)){
-        cerr << "Error: tipo casteo invalido." << endl;
+    // Primero verificar el tipo de la expresión interna
+    Type* sourceType = e->e->accept(this);
+    
+    // Crear el tipo de destino
+    Type* targetType = new Type();
+    if (!targetType->set_basic_type(e->tipo)){
+        cerr << "Error: tipo de casteo inválido: " << e->tipo << endl;
         exit(0);
     }
-    expressionTypes[e] = t;
-    return t;
+    
+    // Verificar que la conversión sea válida (opcional pero recomendado)
+    // Por ejemplo, podrías verificar que no se haga cast de tipos incompatibles
+    
+    // Guardar el tipo resultante (el tipo de destino)
+    expressionTypes[e] = targetType;
+    
+    return targetType;
 }

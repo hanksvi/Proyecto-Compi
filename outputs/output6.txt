@@ -1,4 +1,34 @@
 === STDOUT ===
+Parseo exitoso
+
+=== Iniciando impresión del programa ===
+var xuint32: uint32
+var a6: int
+var b6: int32
+var c6: float
+var d6: float32
+var e6: uint
+var f6: bool
+xuint32=150.uint32
+a6=xuint32.int
+b6=xuint32.int32
+c6=xuint32.float
+d6=xuint32.float32
+e6=xuint32.uint
+f6=xuint32.bool
+echo(xuint32)
+echo(a6)
+echo(b6)
+echo(c6)
+echo(d6)
+echo(e6)
+echo(f6)
+
+ ===Iniciando chequeo de tipos===
+Revisión exitosa
+ Chequeo de tipos exitoso
+
+ Generando codigo ensamblador en inputs/input6.s
+Revisión exitosa
 
 === STDERR ===
-Error al parsear: Error sintáctico: se esperaba una sentencia en el cuerpo

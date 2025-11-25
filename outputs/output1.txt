@@ -2,14 +2,13 @@
 Parseo exitoso
 
 === Iniciando impresión del programa ===
-var a: int
-a=10
-if a == 10: 
-  echo(1)
-if a == 5: 
-  echo(2)
-else: 
-  echo(3)
+proc calcularPromedio(a:int, b:uint, c:float): float = 
+  var suma: float
+  suma=a.float + b.float + c
+  return (suma / 3.float)
+var resultado: float
+resultado=calcularPromedio(10,20.uint,15.5)
+echo(resultado)
 
  ===Iniciando chequeo de tipos===
 Revisión exitosa
@@ -17,9 +16,5 @@ Revisión exitosa
 
  Generando codigo ensamblador en inputs/input1.s
 Revisión exitosa
-
- Generando ejecutable 
-1
-3
 
 === STDERR ===

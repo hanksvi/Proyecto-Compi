@@ -2,11 +2,33 @@
 Parseo exitoso
 
 === Iniciando impresión del programa ===
-var x: int
-var y: float
-x=y
+var xuint: uint
+var a5: int
+var b5: int32
+var c5: float
+var d5: float32
+var e5: uint32
+var f5: bool
+xuint=200.uint
+a5=xuint.int
+b5=xuint.int32
+c5=xuint.float
+d5=xuint.float32
+e5=xuint.uint32
+f5=xuint.bool
+echo(xuint)
+echo(a5)
+echo(b5)
+echo(c5)
+echo(d5)
+echo(e5)
+echo(f5)
 
  ===Iniciando chequeo de tipos===
+Revisión exitosa
+ Chequeo de tipos exitoso
+
+ Generando codigo ensamblador en inputs/input5.s
+Revisión exitosa
 
 === STDERR ===
-Error: tipos incompatibles en asignacion a x (debe ser tipo int).

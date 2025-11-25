@@ -78,6 +78,30 @@ int FcallStm::accept(Visitor* visitor){
 
 ///////////////////////////////////////////////////////////////////////////////////
 
+bool GenCodeVisitor::isFloatType(const string& type) {
+    return type == "float" || type == "float32";
+}
+
+bool GenCodeVisitor::isFloat64(const string& type) {
+    return type == "float";  // 64 bits
+}
+
+bool GenCodeVisitor::isFloat32(const string& type) {
+    return type == "float32";  // 32 bits
+}
+
+bool GenCodeVisitor::isInt64(const string& type) {
+    return type == "int" || type == "uint";
+}
+
+bool GenCodeVisitor::isInt32(const string& type) {
+    return type == "int32" || type == "uint32";
+}
+
+bool GenCodeVisitor::isUnsignedType(const string& type) {
+    return type == "uint" || type == "uint32";
+}
+
 string GenCodeVisitor::obtenerTipoString(Exp* exp) {
     Type* tipo = tipe.getExpressionType(exp);
     return tipo->toString();
@@ -105,7 +129,13 @@ int GenCodeVisitor::generar(Program* program) {
 }
 
 int GenCodeVisitor::visit(Program* program) {
-out << ".data\nprint_fmt: .string \"%ld \\n\""<<endl;
+    out << ".data\n";
+     // Formatos de impresión
+    out << "print_fmt: .string \"%ld\\n\"\n";           // int/int64
+    out << "print_fmt_uint: .string \"%lu\\n\"\n";      // uint/uint64
+    out << "print_fmt_float: .string \"%f\\n\"\n";      // float/float32 (ambos usan %f)
+    out << "print_fmt_true: .string \"true\\n\"\n";     // bool true
+    out << "print_fmt_false: .string \"false\\n\"\n";   // bool false
     enNivelGlobal = true;
     env.add_level();
     for (auto dec : program->vdlist){
@@ -113,7 +143,21 @@ out << ".data\nprint_fmt: .string \"%ld \\n\""<<endl;
     }
 
     for (auto& [var, _] : memoriaGlobal) {
-        out << var << ": .quad 0"<<endl;
+        string varType = "";
+        for(auto vd: program->vdlist){
+            for(auto v: vd->vars){
+                if (v == var){
+                    varType = vd->type;
+                    break;
+                }
+            }
+        }
+        if (isInt32(varType) || isFloat32(varType)){
+            out << var << ": .long 0"<<endl; // 32 bits
+        } else {
+            out << var << ": .quad 0\n"; // 64 bits
+        }
+        
     }
 
     out << ".text\n";
@@ -134,8 +178,25 @@ out << ".data\nprint_fmt: .string \"%ld \\n\""<<endl;
     out << " ret\n";
 
     env.remove_level();
+ // Emitir constantes float al final
+    if (!floatConstants.empty()) {
+        out << ".section .rodata\n";
+        out << ".align 8\n";
+        for (auto& [label, valueAndType] : floatConstants) {
+            double value = valueAndType.first;
+            string tipo = valueAndType.second;
+            
+            out << label << ":\n";
+            if (isFloat32(tipo)) {
+                out << " .float " << value << "\n";
+            } else {
+                out << " .double " << value << "\n";
+            }
+        }
+    }
+    
     out << ".section .note.GNU-stack,\"\",@progbits"<<endl;
-        return 0;
+    return 0;
 }
 
 int GenCodeVisitor::visit(VarDec* vd) {
@@ -143,6 +204,7 @@ int GenCodeVisitor::visit(VarDec* vd) {
     for (auto var : vd->vars) {
         if (enNivelGlobal) {
             memoriaGlobal[var] = true;
+             globalVariableTypes[var] = vd->type; 
         } else {
             variableTypes[var] = vd->type;
             env.add_var(var, offset);
@@ -155,16 +217,58 @@ int GenCodeVisitor::visit(VarDec* vd) {
 
 
 int GenCodeVisitor::visit(NumberExp* exp) {
-    out << " movq $" << exp->value << ", %rax"<<endl;
+    string tipo = obtenerTipoString(exp);
+    
+    if (isFloatType(tipo)) {
+        // Para literales float, crear una constante en .data
+        string labelName = "float_const_" + to_string(floatConstCounter++);
+        
+        // Guardar constante con su tipo
+        floatConstants[labelName] = make_pair(exp->value, tipo);
+        
+        // Cargar desde memoria
+        if (isFloat64(tipo)) {
+            out << " movsd " << labelName << "(%rip), %xmm0\n";
+            out << " movq %xmm0, %rax\n";
+        } else {
+            out << " movss " << labelName << "(%rip), %xmm0\n";
+            out << " movd %xmm0, %eax\n";
+            out << " movl %eax, %eax\n";
+        }
+    } else {
+        // Para enteros, carga directa
+        out << " movq $" << exp->value << ", %rax\n";
+    }
     return 0;
 }
 
 int GenCodeVisitor::visit(IdExp* exp) {
+    string varType = "";
+    
     if(env.check_local(exp->value)){
-        out << " movq " << env.lookup(exp->value) << "(%rbp), %rax"<<endl;
+        // Variable local
+        if(variableTypes.count(exp->value)){
+            varType = variableTypes[exp->value];
+        }
+        
+        if(isInt32(varType) || isFloat32(varType)){
+            out << " movl "<<env.lookup(exp->value)<< "(%rbp), %eax\n";
+        } else{
+            out << " movq " << env.lookup(exp->value) << "(%rbp), %rax\n";
+        }
     }
-    else if (memoriaGlobal.count(exp->value))
-        out << " movq " << exp->value << "(%rip), %rax"<<endl;
+    else if (memoriaGlobal.count(exp->value)) {
+        // Variable global - usar globalVariableTypes
+        if(globalVariableTypes.count(exp->value)){
+            varType = globalVariableTypes[exp->value];
+        }
+        
+        if(isInt32(varType) || isFloat32(varType)){
+            out << " movl "<< exp->value << "(%rip), %eax\n";
+        } else{
+            out << " movq " << exp->value << "(%rip), %rax\n";
+        }
+    }
     else{
         cerr << "Error: variable '" << exp->value << "' no encontrada." << endl;
         exit(1);
@@ -174,70 +278,217 @@ int GenCodeVisitor::visit(IdExp* exp) {
 }
 
 int GenCodeVisitor::visit(BinaryExp* exp) {
-    exp->left->accept(this);
-    out << " pushq %rax\n";
-    exp->right->accept(this);
-    out << " movq %rax, %rcx\n popq %rax\n";
+    string leftType = obtenerTipoString(exp->left);
+    string rightType = obtenerTipoString(exp->right);
+    bool issFloat = isFloatType(leftType);
+    bool issFloat64 = isFloat64(leftType);
+    bool issInt64 = isInt64(leftType);
+    bool issUnsigned = isUnsignedType(leftType);
 
-    switch (exp->op) {
-        case PLUS_OP:  out << " addq %rcx, %rax\n"; break;
-        case MINUS_OP: out << " subq %rcx, %rax\n"; break;
-        case MUL_OP:   out << " imulq %rcx, %rax\n"; break;
-        case DIV_OP:   out << " cqto\n"
-                        <<" idivq %rcx\n"; 
-                    break;
+    if(issFloat){
+        // Operaciones float
+        exp->left->accept(this);
+        out<<"movq %rax, %xmm0\n";
+        out<<"pushq %rax\n";
+        exp->right->accept(this);
+        out<<"movq %rax, %xmm1\n";
+        out<<"pop %rax\n";
+        out<<"movq %rax, %xmm0\n";
+        switch (exp->op) {
+        case PLUS_OP:  
+            if(issFloat64)   out << " addsd %xmm1, %xmm0\n";   // 64 bits - double
+            else            out << " addss %xmm1, %xmm0\n";            // 32 bits - float
+            break;
+        case MINUS_OP: 
+            if(issFloat64)   out << " subsd %xmm1, %xmm0\n";   // 64 bits - double
+            else            out << " subss %xmm1, %xmm0\n";            // 32 bits - float
+            break;
+        case MUL_OP:   
+            if(issFloat64)   out << " mulsd %xmm1, %xmm0\n";   // 64 bits - double
+            else            out << " mulss %xmm1, %xmm0\n";            // 32 bits - float
+            break;
+        case DIV_OP:  
+            if(issFloat64)   out << " divsd %xmm1, %xmm0\n";   // 64 bits - double
+            else            out << " divss %xmm1, %xmm0\n";            // 32 bits - float
+            break;
         case LS_OP:
-            out << " cmpq %rcx, %rax\n"
-                      << " movl $0, %eax\n"
-                      << " setl %al\n"
-                      << " movzbq %al, %rax\n";
-            break;
         case LSEQ_OP:
-            out << " cmpq %rcx, %rax\n"
-                      << " movl $0, %eax\n"
-                      << " setle %al\n"
-                      << " movzbq %al, %rax\n";
-            break;
         case GR_OP:
-            out << " cmpq %rcx, %rax\n"
-                      << " movl $0, %eax\n"
-                      << " seta %al\n"
-                      << " movzbq %al, %rax\n";
-            break;
         case GREQ_OP:
-            out << " cmpq %rcx, %rax\n"
-                      << " movl $0, %eax\n"
-                      << " setae %al\n"
-                      << " movzbq %al, %rax\n";
+        case EQ_OP:
+            if(issFloat64)   out << " ucomisd %xmm1, %xmm0\n";
+            else            out << " ucomiss %xmm1, %xmm0\n";
+            out << " movl $0, %eax\n";
+            if(exp->op == LS_OP)        out<< "setb %al\n";
+            else if(exp->op == LSEQ_OP) out<< "setbe %al\n";
+            else if(exp->op == GR_OP)   out<< "seta %al\n";
+            else if(exp->op == GREQ_OP) out<< "setae %al\n";
+            else if(exp->op == EQ_OP)   out<< "sete %al\n";
+            out<< " movzbq %al, %rax\n";
+            return 0;
+          }
+    out << " movq %xmm0, %rax\n";
+    }
+    else {
+        exp->left->accept(this);
+        out << " pushq %rax\n";
+        exp->right->accept(this);
+        out << " movq %rax, %rcx\n popq %rax\n";
+        switch (exp->op){
+        case PLUS_OP:  
+            if(issInt64)   out << " addq %rcx, %rax\n";   // 64 bits 
+            else            out << " addl %ecx, %eax\n";            // 32 bits
+            break;
+        case MINUS_OP: 
+            if(issFloat64)   out << " subq %rcx, %rax\n";   // 64 bits - double
+            else            out << " subl %ecx, %eax\n";            // 32 bits - float
+            break;
+        case MUL_OP:   
+            if (issUnsigned){
+                if(issFloat64)   out << " mulq %rcx\n";   // unsingned - 64 bits 
+                else            out << " mull %ecx\n";            // unsingned - 32 bits 
+            }
+            else {
+                if(issFloat64)   out << " imulq %rcx\n";   // signed - 64 bits 
+                else            out << " imull %ecx\n";            // signed 32 bits 
+            }
+            
+            break;
+        case DIV_OP:  
+            if(issUnsigned){
+                if(issInt64){
+                    out << " xorq %rdx, %rdx\n";        // limpiar rdx
+                    out << " divq %rcx\n";              // unsigned 64 bits
+                }
+                else {
+                    out << " xorl %edx, %edx\n";        // limpiar edx
+                    out << " divl %ecx\n";              // unsigned 32 bits
+                }
+            } else {
+                if(issInt64) {
+                    out << " cqto\n";                   // extender signo 64-bits
+                    out << " idivq %rcx\n";             // signed 64-bits
+                } else {
+                    out << " cltd\n";                   // extender signo 32-bits
+                    out << " idivl %ecx\n";              // signed 32-bits
+                }
+            }
+            break;
+        case LS_OP:
+        case LSEQ_OP:
+        case GR_OP:
+        case GREQ_OP:
+            if(issInt64)     out << " cmpq %rcx, %rax\n";
+            else            out << " cmpq %ecx, %eax\n";
+
+            out << " movl $0, %eax\n";
+            if(issUnsigned){
+                // Comparaciones unsigned
+                if (exp->op == LS_OP)       out << " setb %al\n";
+                else if (exp->op == LSEQ_OP) out << " setbe %al\n";
+                else if (exp->op == GR_OP)  out << " seta %al\n";
+                else if (exp->op == GREQ_OP) out << " setae %al\n";
+            } else {
+                // Comparaciones signed
+                if (exp->op == LS_OP)       out << " setl %al\n";
+                else if (exp->op == LSEQ_OP) out << " setle %al\n";
+                else if (exp->op == GR_OP)  out << " setg %al\n";
+                else if (exp->op == GREQ_OP) out << " setge %al\n";
+            }
+            out << " movzbq %al, %rax\n";
             break;
         case EQ_OP:
-            out << " cmpq %rcx, %rax\n"
-                      << " movl $0, %eax\n"
-                      << " sete %al\n"
-                      << " movzbq %al, %rax\n";
+            if (issInt64)    out << " cmpq %rcx, %rax\n";
+            else            out << " cmpl %ecx, %eax\n";
+
+            out<< " movl $0, %eax\n";
+            out<< " sete %al\n";
+            out<< " movzbq %al, %rax\n";
             break;
+        }
     }
     return 0;
 }
 
 
 int GenCodeVisitor::visit(AssignStm* stm) {
-    stm->e->accept(this);
-    if (memoriaGlobal.count(stm->id))
-        out << " movq %rax, " << stm->id << "(%rip)"<<endl;
-    else
-        out << " movq %rax, " << env.lookup(stm->id) << "(%rbp)"<<endl;
-            return 0;
-}
+    string varType = "";
+    
+    // Buscar tipo en el mapa correcto
+    if (env.check_local(stm->id) && variableTypes.count(stm->id)){
+        varType = variableTypes[stm->id];
+    } else if (memoriaGlobal.count(stm->id) && globalVariableTypes.count(stm->id)){
+        varType = globalVariableTypes[stm->id];
+    }
 
-int GenCodeVisitor::visit(PrintStm* stm) {
     stm->e->accept(this);
-    out <<
-        " movq %rax, %rsi\n"
-        " leaq print_fmt(%rip), %rdi\n"
-        " movl $0, %eax\n"
-        " call printf@PLT\n";
-            return 0;
+
+    if (memoriaGlobal.count(stm->id)) {
+        if (isInt32(varType) || isFloat32(varType)) {
+            out << " movl %eax, " << stm->id << "(%rip)\n";
+        } else {
+            out << " movq %rax, " << stm->id << "(%rip)\n";
+        }
+    } else {
+        if (isInt32(varType) || isFloat32(varType)) {
+            out << " movl %eax, " << env.lookup(stm->id) << "(%rbp)\n";
+        } else {
+            out << " movq %rax, " << env.lookup(stm->id) << "(%rbp)\n";
+        }
+    }
+    
+    return 0;
+}
+int GenCodeVisitor::visit(PrintStm* stm) {
+    string exprType = obtenerTipoString(stm->e);
+    
+    stm->e->accept(this);
+    
+    if (exprType == "float") {
+        // Float 64 bits (double)
+        out << " movq %rax, %xmm0\n";           // mover a XMM
+        out << " movq $1, %rax\n";              // indicar 1 registro XMM usado
+        out << " leaq print_fmt_float(%rip), %rdi\n";
+        out << " call printf@PLT\n";
+        
+    } else if (exprType == "float32") {
+        // Float 32 bits
+        out << " movd %eax, %xmm0\n";           // mover 32 bits a XMM
+        out << " cvtss2sd %xmm0, %xmm0\n";      // convertir a double para printf
+        out << " movq $1, %rax\n";
+        out << " leaq print_fmt_float(%rip), %rdi\n";
+        out << " call printf@PLT\n";
+        
+    } else if (exprType == "uint" || exprType == "uint32") {
+        // Unsigned (64 o 32 bits)
+        if (exprType == "uint32") {
+            out << " movl %eax, %eax\n";        // zero-extend 32→64
+        }
+        out << " movq %rax, %rsi\n";
+        out << " leaq print_fmt_uint(%rip), %rdi\n";
+        out << " movl $0, %eax\n";
+        out << " call printf@PLT\n";
+        
+    } else if (exprType == "bool") {
+    // Bool - imprimir 0 o 1
+    out << " movzbq %al, %rax\n";               // asegurar que solo sea 0 o 1
+    out << " movq %rax, %rsi\n";
+    out << " leaq print_fmt(%rip), %rdi\n";    // reutilizar formato de int
+    out << " movl $0, %eax\n";
+    out << " call printf@PLT\n";
+
+    } else {
+        // Int o int32 (con signo)
+        if (exprType == "int32") {
+            out << " movslq %eax, %rax\n";      // sign-extend 32→64
+        }
+        out << " movq %rax, %rsi\n";
+        out << " leaq print_fmt(%rip), %rdi\n";
+        out << " movl $0, %eax\n";
+        out << " call printf@PLT\n";
+    }
+    
+    return 0;
 }
 
 int GenCodeVisitor::visit(FcallStm* stm) {
@@ -318,6 +569,9 @@ int GenCodeVisitor::visit(FunDec* fd) {
     // Agregar nuevo nivel de scope para la función
     env.add_level();
     
+        bool wasGlobal = enNivelGlobal;
+    enNivelGlobal = false;
+
     int size = fd->Pnombres.size();
     for (int i = 0; i < size; i++) {
         variableTypes[fd->Pnombres[i]] = fd->Ptipos[i];
@@ -335,6 +589,8 @@ int GenCodeVisitor::visit(FunDec* fd) {
         i->accept(this);
     }
     
+    enNivelGlobal = wasGlobal;
+
     // Remover el nivel de scope de la función
     env.remove_level();
     
@@ -383,7 +639,6 @@ int GenCodeVisitor::visit(IfExp* exp){
 }
 
 int GenCodeVisitor::visit(CastExp* exp){
-    
     exp->e->accept(this);
 
     string origenType = obtenerTipoString(exp->e);
@@ -393,36 +648,159 @@ int GenCodeVisitor::visit(CastExp* exp){
         return 0;    
     }
 
-    // int -> bool
-    if((origenType == "int" || origenType == "int32") && destiniType == "bool"){
-        out << " cmpq $0, %rax" << endl;
-        out << " movl $0, %eax" << endl;
-        out << " setne %al" << endl;
-        out << " movzbq %al, %rax" << endl;
+    // ========== INT/UINT → FLOAT ==========
+    
+    // int64/uint64 → float64
+    if ((origenType == "int" || origenType == "uint") && destiniType == "float") {
+        // %rax contiene el entero
+        out << " cvtsi2sd %rax, %xmm0\n";  // convertir a double en xmm0
+        out << " movq %xmm0, %rax\n";       // guardar bits en rax
         return 0;
     }
     
-    // bool -> int
-    if (origenType == "bool" && (destiniType == "int" || destiniType == "int32")) {
-        
+    // int32/uint32 → float32
+    if ((origenType == "int32" || origenType == "uint32") && destiniType == "float32") {
+        out << " cvtsi2ss %eax, %xmm0\n";  // convertir a float en xmm0
+        out << " movd %xmm0, %eax\n";      // guardar bits en eax
+        out << " movl %eax, %eax\n";       // zero-extend
+        return 0;
+    }
+    
+    // int64/uint64 → float32
+    if ((origenType == "int" || origenType == "uint") && destiniType == "float32") {
+        out << " cvtsi2ss %rax, %xmm0\n";
+        out << " movd %xmm0, %eax\n";
+        out << " movl %eax, %eax\n";
+        return 0;
+    }
+    
+    // int32/uint32 → float64
+    if ((origenType == "int32" || origenType == "uint32") && destiniType == "float") {
+        out << " cvtsi2sd %eax, %xmm0\n";
+        out << " movq %xmm0, %rax\n";
         return 0;
     }
 
-    // int -> float
-    if ((origenType == "int" || origenType == "int32") && 
-        (destiniType == "float" || destiniType == "float32")) {
-        out << " cvtsi2sd %rax, %xmm0" << endl;
-        out << " movq %xmm0, %rax" << endl;
+    // ========== FLOAT → INT/UINT ==========
+    
+    // float64 → int64/uint64
+    if (origenType == "float" && (destiniType == "int" || destiniType == "uint")) {
+        // %rax contiene los bits del float
+        out << " movq %rax, %xmm0\n";       // mover bits a xmm0
+        out << " cvttsd2siq %xmm0, %rax\n";  // convertir double a int64
+        return 0;
+    }
+    
+    // float32 → int32/uint32
+    if (origenType == "float32" && (destiniType == "int32" || destiniType == "uint32")) {
+        out << " movd %eax, %xmm0\n";       // mover bits a xmm0
+        out << " cvttss2si %xmm0, %eax\n";  // convertir float a int32
+        return 0;
+    }
+    
+    // float64 → int32/uint32
+    if (origenType == "float" && (destiniType == "int32" || destiniType == "uint32")) {
+        out << " movq %rax, %xmm0\n";
+        out << " cvttsd2si %xmm0, %eax\n";  // convertir double a int32
+        return 0;
+    }
+    
+    // float32 → int64/uint64
+    if (origenType == "float32" && (destiniType == "int" || destiniType == "uint")) {
+        out << " movd %eax, %xmm0\n";
+        out << " cvttss2si %xmm0, %rax\n";  // convertir float a int64
         return 0;
     }
 
-    // float -> int
-    if ((origenType == "float" || origenType == "float32") && 
-        (destiniType == "int" || destiniType == "int32")) {
-        out << " movq %rax, %xmm0" << endl;
-        out << " cvttsd2si %xmm0, %rax" << endl;
+    // ========== FLOAT32 ↔ FLOAT64 ==========
+    
+    // float32 → float64
+    if (origenType == "float32" && destiniType == "float") {
+        out << " movd %eax, %xmm0\n";
+        out << " cvtss2sd %xmm0, %xmm0\n";  // float → double
+        out << " movq %xmm0, %rax\n";
         return 0;
     }
+    
+    // float64 → float32
+    if (origenType == "float" && destiniType == "float32") {
+        out << " movq %rax, %xmm0\n";
+        out << " cvtsd2ss %xmm0, %xmm0\n";  // double → float
+        out << " movd %xmm0, %eax\n";
+        out << " movl %eax, %eax\n";
+        return 0;
+    }
+
+    // ========== INT32 ↔ INT64 ==========
+    
+    // int32 → int64 (con extensión de signo)
+    if (origenType == "int32" && destiniType == "int") {
+        out << " movslq %eax, %rax\n";
+        return 0;
+    }
+    
+    // uint32 → uint64 (con extensión de cero)
+    if (origenType == "uint32" && destiniType == "uint") {
+        out << " movl %eax, %eax\n";
+        return 0;
+    }
+    
+    // int64 → int32 (truncar)
+    if (origenType == "int" && destiniType == "int32") {
+        // Ya está en %eax (32 bits bajos)
+        return 0;
+    }
+    
+    // uint64 → uint32 (truncar)
+    if (origenType == "uint" && destiniType == "uint32") {
+        out << " movl %eax, %eax\n";
+        return 0;
+    }
+
+    // ========== INT ↔ UINT (mismo tamaño) ==========
+    
+    if ((origenType == "int" && destiniType == "uint") ||
+        (origenType == "uint" && destiniType == "int") ||
+        (origenType == "int32" && destiniType == "uint32") ||
+        (origenType == "uint32" && destiniType == "int32")) {
+        // Reinterpretación de bits, no hacer nada
+        return 0;
+    }
+
+    // ========== CONVERSIONES A BOOL ==========
+    
+    if (destiniType == "bool") {
+        if (isFloatType(origenType)) {
+            if (origenType == "float") {
+                out << " movq %rax, %xmm0\n";
+                out << " xorpd %xmm1, %xmm1\n";
+                out << " ucomisd %xmm1, %xmm0\n";
+            } else {
+                out << " movd %eax, %xmm0\n";
+                out << " xorps %xmm1, %xmm1\n";
+                out << " ucomiss %xmm1, %xmm0\n";
+            }
+            out << " movl $0, %eax\n";
+            out << " setne %al\n";
+            out << " movzbq %al, %rax\n";
+        } else {
+            if (origenType == "int" || origenType == "uint") {
+                out << " cmpq $0, %rax\n";
+            } else {
+                out << " cmpl $0, %eax\n";
+            }
+            out << " movl $0, %eax\n";
+            out << " setne %al\n";
+            out << " movzbq %al, %rax\n";
+        }
+        return 0;
+    }
+    
+    // bool → cualquier tipo entero
+    if (origenType == "bool" && !isFloatType(destiniType)) {
+        return 0;
+    }
+
     return 0;
 }
 int GenCodeVisitor::visit(BoolExp* exp){

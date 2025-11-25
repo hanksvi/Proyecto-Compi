@@ -1,3 +1,24 @@
-var x: int
-x = y
+var xfloat32: float32
+var a4: int
+var b4: int32
+var c4: float
+var d4: uint
+var e4: uint32
+var f4: bool
 
+xfloat32 = 15.5.float32
+
+a4 = xfloat32.int
+b4 = xfloat32.int32
+c4 = xfloat32.float
+d4 = xfloat32.uint
+e4 = xfloat32.uint32
+f4 = xfloat32.bool
+
+echo(xfloat32)
+echo(a4)
+echo(b4)
+echo(c4)
+echo(d4)
+echo(e4)
+echo(f4)

@@ -1,7 +1,22 @@
-proc doble(a: int): int =
-    return a * 2
+proc operacionCompleja(x: int32, y: float32, z: uint32): float =
+    var temp1: float
+    var temp2: float
+    
+    temp1 = x.float + y.float
+    temp2 = z.float * 2.float
+    
+    return temp1 + temp2
 
-proc triple(a: int): int =
-    return doble(a) + a
+var a: int32
+var b: float32
+var c: uint32
+var res: float
 
-echo(triple(3))
+a = 10.int32
+b = 3.5.float32
+c = 25.uint32
+echo(a)
+echo(b)
+echo(c)
+res = operacionCompleja(a, b, c)
+echo(res)

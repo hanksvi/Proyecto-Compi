@@ -378,8 +378,17 @@ Exp* Parser::parseF() {
     Exp* e;
     string nom;
     if (match(Token::NUM)) {
-
-        return new NumberExp(stoi(previous->text));
+        int numValue = stoi(previous->text);
+        if(match(Token::POINT)){
+            if(match(Token::ID)){
+                string castType = previous->text;
+                NumberExp* numExp = new NumberExp(numValue);
+                return new CastExp(castType, numExp);
+            }else {
+                throw runtime_error("Error: se esperaba un tipo después del punto");
+            }
+        }
+        return new NumberExp(numValue);
     }
     else if (match(Token::TRUE))
     {
@@ -394,8 +403,17 @@ Exp* Parser::parseF() {
         return e;
     }
     else if(match(Token::FLOAT)){
-        cout<<stod(previous->text)<<endl;
-        return new NumberExp(stod(previous->text));
+        double floatValue = stod(previous->text);
+        if(match(Token::POINT)){
+            if(match(Token::ID)){
+                string castType = previous->text;
+                NumberExp* numExp = new NumberExp(floatValue);
+                return new CastExp(castType, numExp);
+            }else {
+                throw runtime_error("Error: se esperaba un tipo después del punto");
+            }
+        }
+        return new NumberExp(floatValue);
     }
     
     else if (match(Token::TRUE)) {

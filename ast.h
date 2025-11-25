@@ -53,10 +53,13 @@ class NumberExp : public Exp {
 public:
     double value;
     bool isFloat;
+    string specificType;
     int accept(Visitor* visitor);
     Type* accept(TypeVisitor* visitor);
     NumberExp(int v);
     NumberExp(double v);
+     NumberExp(int v, string type): value(v), isFloat(false), specificType(type) {}; 
+    NumberExp(double v, string type): value(v), isFloat(true), specificType(type) {}; 
     ~NumberExp();
 };
 
