@@ -129,7 +129,7 @@ echo(pot)
 
 ---
 
-### Test 3: Función con conversiones implícitas en parámetros    -- ERROR (NO DA EL INPUT CORRECTO)
+### Test 3: Función con conversiones implícitas en parámetros    -- ERROR (NO DA EL OUTPUT CORRECTO)
 
 ```nim
 proc operacionCompleja(x: int32, y: float32, z: uint32): float =
