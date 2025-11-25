@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Compilador</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f3f4f6;
+            color: #111827;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 24px;
+        }
+
+        header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        header p {
+            margin-top: 6px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 10px 14px;
+            border-bottom: 1px solid #e5e7eb;
+            background: #f9fafb;
+            font-size: 14px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .card-content {
+            padding: 14px;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 520px;
+            font-size: 13px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 240px;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #d1d5db;
+            font-family: "Consolas", "Courier New", monospace;
+            font-size: 13px;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 1px #2563eb22;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        button {
+            border: none;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        button.secondary { background: #6b7280; }
+        button.outline {
+            background: #ffffff;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .stack-container {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 6px;
+        }
+
+        .stack-item {
+            border-radius: 4px;
+            border: 1px solid #d1d5db;
+            padding: 6px 8px;
+            font-family: "Consolas","Courier New",monospace;
+            background: #f9fafb;
+        }
+
+        .stack-item.active {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .stack-empty, .memory-empty {
+            font-size: 12px;
+            color: #9ca3af;
+            font-style: italic;
+            text-align: center;
+            padding: 12px 4px;
+        }
+
+        .step-info {
+            font-size: 12px;
+            color: #4b5563;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: #2563eb;
+            transition: width 0.2s ease;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .controls-row button { flex: 1; }
+
+        .registers-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0,1fr));
+            gap: 8px;
+        }
+
+        .register {
+            padding: 6px 8px;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            font-family: "Consolas","Courier New",monospace;
+        }
+
+        .register-name {
+            font-size: 11px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .register-value {
+            margin-top: 2px;
+            font-size: 12px;
+            color: #111827;
+            word-break: break-all;
+        }
+
+        .bottom-card {
+            margin-top: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0 14px;
+            background: #f9fafb;
+        }
+
+        .tab {
+            padding: 8px 10px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 12px;
+            color: #6b7280;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            color: #111827;
+            border-bottom-color: #2563eb;
+            font-weight: 500;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 10px 14px 14px;
+        }
+
+        .tab-content.active { display: block; }
+
+        .output-box {
+            font-family: "Consolas","Courier New",monospace;
+            font-size: 12px;
+            background: #f9fafb;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+            padding: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .output-box.error {
+            border-color: #f97373;
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .asm-line {
+            padding: 2px 4px;
+            border-left: 2px solid transparent;
+        }
+
+        .asm-line.current {
+            background: #fef3c7;
+            border-left-color: #f59e0b;
+        }
+
+        .asm-line.executed {
+            background: #ecfdf3;
+            border-left-color: #16a34a;
+        }
+
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px,1fr));
+            gap: 6px;
+        }
+
+        .memory-cell {
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+            padding: 6px 8px;
+            font-family: "Consolas","Courier New",monospace;
+            font-size: 11px;
+            background: #f9fafb;
+        }
+
+        .memory-cell span {
+            display: block;
+        }
+
+        @media (max-width: 1100px) {
+            .main-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Visualizador de Compilador</h1>
+        <p>Ejecución paso a paso del código x86 generado por tu compilador (pila, registros y variables).</p>
+    </header>
+
+    <div class="main-grid">
+        <!-- Código fuente -->
+        <div class="card">
+            <div class="card-header">Código fuente (lenguaje tipo Nim)</div>
+            <div class="card-content">
+                <textarea id="codeInput"></textarea>
+                <div class="button-row">
+                    <button onclick="compilarCodigo()">Compilar y cargar</button>
+                    <button class="secondary" onclick="cargarEjemplo()">Cargar ejemplo</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pila -->
+        <div class="card">
+            <div class="card-header">Pila de ejecución (stack)</div>
+            <div class="card-content">
+                <div class="step-info" id="stepInfo">Paso: 0/0</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div id="stackContainer" class="stack-container">
+                    <div class="stack-empty">Compila un programa para ver los cambios en la pila.</div>
+                </div>
+                <div class="controls-row">
+                    <button class="outline" onclick="pasoAnterior()">Anterior</button>
+                    <button class="outline" onclick="pasoSiguiente()">Siguiente</button>
+                </div>
+                <div class="controls-row">
+                    <button class="outline" onclick="resetPasos()">Reiniciar</button>
+                    <button class="outline" onclick="autoPlay()">Auto</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registros -->
+        <div class="card">
+            <div class="card-header">Registros x86-64</div>
+            <div class="card-content">
+                <div class="registers-grid">
+                    <div class="register">
+                        <div class="register-name">RAX</div>
+                        <div class="register-value" id="reg-rax">0x00000000</div>
+                    </div>
+                    <div class="register">
+                        <div class="register-name">RBX</div>
+                        <div class="register-value" id="reg-rbx">0x00000000</div>
+                    </div>
+                    <div class="register">
+                        <div class="register-name">RCX</div>
+                        <div class="register-value" id="reg-rcx">0x00000000</div>
+                    </div>
+                    <div class="register">
+                        <div class="register-name">RDX</div>
+                        <div class="register-value" id="reg-rdx">0x00000000</div>
+                    </div>
+                    <div class="register">
+                        <div class="register-name">RSI</div>
+                        <div class="register-value" id="reg-rsi">0x00000000</div>
+                    </div>
+                    <div class="register">
+                        <div class="register-name">RDI</div>
+                        <div class="register-value" id="reg-rdi">0x00000000</div>
+                    </div>
+                    <div class="register">
+                        <div class="register-name">RBP</div>
+                        <div class="register-value" id="reg-rbp">0x00007fff</div>
+                    </div>
+                    <div class="register">
+                        <div class="register-name">RSP</div>
+                        <div class="register-value" id="reg-rsp">0x00007fff</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel inferior: ensamblador, salida, memoria, tokens -->
+    <div class="card bottom-card">
+        <div class="tabs">
+            <button class="tab active" onclick="cambiarTab('assembly', this)">Ensamblador</button>
+            <button class="tab" onclick="cambiarTab('output', this)">Salida</button>
+            <button class="tab" onclick="cambiarTab('memory', this)">Memoria</button>
+            <button class="tab" onclick="cambiarTab('tokens', this)">Tokens</button>
+        </div>
+
+        <div id="assembly" class="tab-content active">
+            <div id="asmContent" class="output-box">Compila para ver el código ensamblador.</div>
+        </div>
+
+        <div id="output" class="tab-content">
+            <div style="margin-bottom:8px; font-size:12px; font-weight:500;">Salida estándar</div>
+            <div id="stdOutput" class="output-box" style="margin-bottom:10px;"></div>
+            <div style="margin-bottom:8px; font-size:12px; font-weight:500;">Errores</div>
+            <div id="stdError" class="output-box error"></div>
+        </div>
+
+        <div id="memory" class="tab-content">
+            <div style="margin-bottom:6px; font-size:12px; font-weight:500;">Variables locales (frame actual)</div>
+            <div id="localMemory" class="memory-grid"></div>
+            <div style="margin:12px 0 6px; font-size:12px; font-weight:500;">Variables globales</div>
+            <div id="globalMemory" class="memory-grid"></div>
+        </div>
+
+        <div id="tokens" class="tab-content">
+            <div id="tokensContent" class="output-box"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ===== ESTADO =====
+    let estado = {
+        codigo: "",
+        tokens: [],
+        assembly: "",
+        stdout: "",
+        stderr: "",
+        pasos: [],       // { indiceAsm, registros, pila, locals, globals, descripcion }
+        pasoActual: 0,
+        autoplay: false
+    };
+
+    const REG_INICIAL = {
+        rax: 0,
+        rbx: 0,
+        rcx: 0,
+        rdx: 0,
+        rsi: 0,
+        rdi: 0,
+        rbp: 0x7fffff00,
+        rsp: 0x7fffff00
+    };
+
+    const cloneRegs = r => ({...r});
+    const cloneObj  = o => JSON.parse(JSON.stringify(o));
+
+    function cargarEjemplo() {
+        const ejemplo = `var x: int
+var y: int
+x = 10
+y = 20
+echo(x)
+echo(y)`;
+        document.getElementById("codeInput").value = ejemplo;
+    }
+
+    async function compilarCodigo() {
+        const codigo = document.getElementById("codeInput").value;
+        estado.codigo = codigo;
+        estado.tokens = analizarTokens(codigo);
+
+        try {
+            const resp = await fetch("/compile", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ codigo })
+            });
+
+            const data = await resp.json();
+            console.log("Respuesta /compile:", data);
+
+            estado.stdout = data.stdout || "";
+            estado.stderr = data.stderr || "";
+
+            document.getElementById("stdOutput").textContent = estado.stdout;
+            document.getElementById("stdError").textContent  = estado.stderr;
+
+            if (!data.assembly) {
+                document.getElementById("asmContent").textContent =
+                    "No se generó código ensamblador (.s). Revisa el main para confirmar la ruta.";
+                estado.assembly = "";
+                estado.pasos = [];
+                actualizarVista();
+                return;
+            }
+
+            estado.assembly = data.assembly;
+            mostrarAssembly();
+
+            construirPasosDesdeAssembly();
+            estado.pasoActual = 0;
+            actualizarVista();
+        } catch (e) {
+            document.getElementById("stdError").textContent =
+                "Error comunicando con el servidor: " + e.message;
+        }
+    }
+
+    function analizarTokens(codigo) {
+        const reservadas = ["var","echo","if","while","proc","return","true","false"];
+        const tokens = [];
+        const lineas = codigo.split("\n");
+        lineas.forEach((linea, i) => {
+            const parts = linea.match(/[A-Za-z_]\w*|\d+|==|<=|>=|[:=(),+\-/*]/g) || [];
+            parts.forEach(p => {
+                let tipo = "ID";
+                if (reservadas.includes(p)) tipo = "KEYWORD";
+                else if (/^\d+$/.test(p)) tipo = "NUM";
+                tokens.push({ tipo, valor:p, linea:i+1 });
+            });
+        });
+        return tokens;
+    }
+
+    function cambiarTab(nombre, btn) {
+        document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+        document.getElementById(nombre).classList.add("active");
+
+        document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        if (nombre === "assembly") mostrarAssembly();
+        if (nombre === "memory")   actualizarMemoria();
+        if (nombre === "tokens")   mostrarTokens();
+    }
+
+    function mostrarAssembly() {
+        const box = document.getElementById("asmContent");
+        box.innerHTML = "";
+        if (!estado.assembly) {
+            box.textContent = "Compila para ver el código ensamblador.";
+            return;
+        }
+        const lineas = estado.assembly.split("\n");
+        lineas.forEach((l, i) => {
+            const div = document.createElement("div");
+            div.className = "asm-line";
+            div.id = "asm-" + i;
+            div.textContent = l;
+            box.appendChild(div);
+        });
+        resaltarAssembly();
+    }
+
+    function resaltarAssembly() {
+        const lines = document.querySelectorAll(".asm-line");
+        lines.forEach(l => l.classList.remove("current","executed"));
+        if (!estado.pasos.length) return;
+        const idxAsm = estado.pasos[estado.pasoActual].indiceAsm;
+        lines.forEach((l, i) => {
+            if (i < idxAsm) l.classList.add("executed");
+            else if (i === idxAsm) l.classList.add("current");
+        });
+    }
+
+    function construirPasosDesdeAssembly() {
+        const regs = cloneRegs(REG_INICIAL);
+        let stack = [];
+        let locals = {};
+        let globals = {};
+
+        const pasos = [];
+        const lines = estado.assembly.split("\n");
+
+        lines.forEach((raw, idx) => {
+            const text = raw.trim();
+            if (!text || text.startsWith(".")) return;
+            if (text.endsWith(":")) return;        // etiqueta
+
+            // quitar comentarios
+            const line = text.split("#")[0].trim();
+            if (!line) return;
+
+            const parts = line.split(/\s+/);
+            const op = parts[0];
+            const rest = parts.slice(1).join(" ").trim();
+            const ops = rest ? rest.split(",").map(s => s.trim()) : [];
+
+            const getVal = (opnd) => {
+                if (!opnd) return 0;
+                if (opnd.startsWith("$")) return parseInt(opnd.substring(1)) || 0;
+                if (opnd.startsWith("%")) {
+                    const r = opnd.replace("%","").toLowerCase();
+                    return regs[r] || 0;
+                }
+                if (opnd.includes("(%rbp)")) {
+                    const key = opnd;
+                    return (locals[key] !== undefined) ? locals[key] : 0;
+                }
+                return 0;
+            };
+
+            const setReg = (reg, val) => {
+                const r = reg.replace("%","").toLowerCase();
+                if (regs[r] !== undefined) regs[r] = val;
+            };
+
+            let descripcion = line;
+
+            switch (op) {
+                case "pushq": {
+                    const v = getVal(ops[0]);
+                    stack.push({ etiqueta: ops[0], valor: v });
+                    regs.rsp -= 8;
+                    descripcion = `pushq ${ops[0]}   ; apila ${v}`;
+                    break;
+                }
+                case "popq": {
+                    if (stack.length) {
+                        const item = stack.pop();
+                        setReg(ops[0], item.valor);
+                        regs.rsp += 8;
+                        descripcion = `popq ${ops[0]}   ; desapila ${item.valor}`;
+                    }
+                    break;
+                }
+                case "movq": {
+                    if (ops.length === 2) {
+                        const src = ops[0], dst = ops[1];
+                        const v = getVal(src);
+                        if (dst.startsWith("%")) {
+                            setReg(dst, v);
+                            descripcion = `movq ${src}, ${dst}   ; ${dst} = ${v}`;
+                        } else if (dst.includes("(%rbp)")) {
+                            locals[dst] = v;
+                            descripcion = `movq ${src}, ${dst}   ; variable local ${dst} = ${v}`;
+                        }
+                    }
+                    break;
+                }
+                case "movl": {
+                    if (ops.length === 2) {
+                        const v = getVal(ops[0]) & 0xffffffff;
+                        setReg(ops[1], v);
+                        descripcion = `movl ${ops[0]}, ${ops[1]}   ; ${ops[1]} = ${v}`;
+                    }
+                    break;
+                }
+                case "call": {
+                    // dirección de retorno simulada
+                    stack.push({ etiqueta: "RET(" + ops[0] + ")", valor: regs.rip || 0 });
+                    regs.rsp -= 8;
+                    descripcion = `call ${ops[0]}   ; guarda dirección de retorno en la pila`;
+                    break;
+                }
+                case "leave": {
+                    regs.rsp = regs.rbp;
+                    if (stack.length) {
+                        const item = stack.pop();
+                        setReg("%rbp", item.valor);
+                        regs.rsp += 8;
+                    }
+                    locals = {};
+                    descripcion = "leave   ; restaura frame anterior";
+                    break;
+                }
+                case "ret": {
+                    if (stack.length) {
+                        const item = stack.pop();
+                        regs.rsp += 8;
+                    }
+                    descripcion = "ret   ; retorno de función";
+                    break;
+                }
+            }
+
+            pasos.push({
+                indiceAsm: idx,
+                registros: cloneRegs(regs),
+                pila: stack.map(s => `${s.etiqueta} = ${s.valor}`),
+                locals: cloneObj(locals),
+                globals: cloneObj(globals),
+                descripcion
+            });
+        });
+
+        estado.pasos = pasos;
+    }
+
+    function pasoSiguiente() {
+        if (!estado.pasos.length) return;
+        if (estado.pasoActual < estado.pasos.length - 1) {
+            estado.pasoActual++;
+            actualizarVista();
+        }
+    }
+
+    function pasoAnterior() {
+        if (!estado.pasos.length) return;
+        if (estado.pasoActual > 0) {
+            estado.pasoActual--;
+            actualizarVista();
+        }
+    }
+
+    function autoPlay() {
+        if (!estado.pasos.length) return;
+        estado.autoplay = !estado.autoplay;
+        if (estado.autoplay) reproducirAuto();
+    }
+
+    function reproducirAuto() {
+        if (!estado.autoplay) return;
+        if (estado.pasoActual < estado.pasos.length - 1) {
+            estado.pasoActual++;
+            actualizarVista();
+            setTimeout(reproducirAuto, 650);
+        } else {
+            estado.autoplay = false;
+        }
+    }
+
+    function resetPasos() {
+        estado.pasoActual = 0;
+        actualizarVista();
+    }
+
+    function actualizarVista() {
+        const stepInfo = document.getElementById("stepInfo");
+        const progress = document.getElementById("progressFill");
+
+        if (!estado.pasos.length) {
+            stepInfo.textContent = "Paso: 0/0";
+            progress.style.width = "0%";
+            actualizarPila([]);
+            actualizarRegistros(REG_INICIAL);
+            actualizarMemoria();
+            resaltarAssembly();
+            return;
+        }
+
+        const paso = estado.pasos[estado.pasoActual];
+        stepInfo.textContent = `Paso: ${estado.pasoActual + 1}/${estado.pasos.length}`;
+        progress.style.width =
+            (estado.pasoActual / (estado.pasos.length - 1)) * 100 + "%";
+
+        actualizarPila(paso.pila);
+        actualizarRegistros(paso.registros);
+        resaltarAssembly();
+        actualizarMemoria();
+    }
+
+    function actualizarPila(pila) {
+        const cont = document.getElementById("stackContainer");
+        cont.innerHTML = "";
+        if (!pila || !pila.length) {
+            cont.innerHTML = '<div class="stack-empty">Pila vacía.</div>';
+            return;
+        }
+        // la parte superior de la pila (último push) se muestra arriba
+        [...pila].reverse().forEach((item, idx) => {
+            const div = document.createElement("div");
+            div.className = "stack-item" + (idx === 0 ? " active" : "");
+            div.textContent = item;
+            cont.appendChild(div);
+        });
+    }
+
+    function actualizarRegistros(regs) {
+        for (const r in REG_INICIAL) {
+            const el = document.getElementById("reg-" + r);
+            if (!el) continue;
+            const v = regs[r] || 0;
+            el.textContent = "0x" + Math.abs(v).toString(16).padStart(8, "0");
+        }
+    }
+
+    function actualizarMemoria() {
+        const localDiv  = document.getElementById("localMemory");
+        const globalDiv = document.getElementById("globalMemory");
+        localDiv.innerHTML = "";
+        globalDiv.innerHTML = "";
+
+        if (!estado.pasos.length) {
+            localDiv.innerHTML  = '<div class="memory-empty">Sin variables locales.</div>';
+            globalDiv.innerHTML = '<div class="memory-empty">Sin variables globales.</div>';
+            return;
+        }
+
+        const paso = estado.pasos[estado.pasoActual];
+
+        const entriesLoc = Object.entries(paso.locals || {});
+        const entriesGlob = Object.entries(paso.globals || {});
+
+        if (!entriesLoc.length) {
+            localDiv.innerHTML = '<div class="memory-empty">Sin variables locales.</div>';
+        } else {
+            entriesLoc.forEach(([slot,val]) => {
+                const cell = document.createElement("div");
+                cell.className = "memory-cell";
+                cell.innerHTML = `<span><strong>${slot}</strong></span><span>valor = ${val}</span>`;
+                localDiv.appendChild(cell);
+            });
+        }
+
+        if (!entriesGlob.length) {
+            globalDiv.innerHTML = '<div class="memory-empty">Sin variables globales.</div>';
+        } else {
+            entriesGlob.forEach(([name,val]) => {
+                const cell = document.createElement("div");
+                cell.className = "memory-cell";
+                cell.innerHTML = `<span><strong>${name}</strong></span><span>valor = ${val}</span>`;
+                globalDiv.appendChild(cell);
+            });
+        }
+    }
+
+    function mostrarTokens() {
+        const box = document.getElementById("tokensContent");
+        if (!estado.tokens.length) {
+            box.textContent = "Sin tokens.";
+            return;
+        }
+        let t = "";
+        estado.tokens.forEach(tok => {
+            t += `TOKEN(${tok.tipo}, "${tok.valor}") - línea ${tok.linea}\n`;
+        });
+        box.textContent = t;
+    }
+
+    // Inicializar
+    cargarEjemplo();
+    actualizarVista();
+</script>
+</body>
+</html>
