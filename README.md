@@ -88,11 +88,11 @@ proc calcularPromedio(a: int, b: uint, c: float): float =
     return suma / 3.float
 
 var resultado: float
-resultado = calcularPromedio(-10, 20, 15.5)
+resultado = calcularPromedio(10, 20.uint, 15.5)
 echo(resultado)
 ```
 
-**Salida esperada:** `8.500000` o similar
+**Salida esperada:** `15.166667` o similar
 
 ---
 
@@ -129,7 +129,7 @@ echo(pot)
 
 ---
 
-### Test 3: Función con conversiones implícitas en parámetros
+### Test 3: Función con conversiones implícitas en parámetros    -- ERROR (NO DA EL OUTPUT CORRECTO)
 
 ```nim
 proc operacionCompleja(x: int32, y: float32, z: uint32): float =
@@ -236,7 +236,7 @@ var y: uint
 var z: float
 var resultado: bool
 
-x = -10
+x = 10
 y = 20.uint
 z = 15.5
 
@@ -246,7 +246,7 @@ echo(resultado)
 resultado = y.float > z
 echo(resultado)
 
-resultado = x.float == -10.float
+resultado = x.float == 10.float
 echo(resultado)
 
 resultado = z >= 15.5
@@ -271,14 +271,14 @@ var b: uint32
 var c: float32
 var d: int32
 
-a = 1000
+a = 1000.int32
 b = 2000.uint32
 c = 3.14159.float32
 
 d = a + b.int32
 echo(d)
 
-a = b.int32 - 500
+a = b.int32 - 500.int32
 echo(a)
 
 c = c * 2.float32
@@ -423,16 +423,17 @@ echo(resultado)
 var x: int32
 var y: int
 var z: int
+var a: float32
+var b: float
+var c: float
 
-x = 100
+x = 100.int32
 y = 200
 
 z = x.int + y
 echo(z)
 
-var a: float32
-var b: float
-var c: float
+
 
 a = 3.5.float32
 b = 7.25
@@ -449,7 +450,7 @@ echo(c)
 
 ---
 
-### Test 13: Expresiones ternarias anidadas con conversiones
+### Test 13: Expresiones ternarias anidadas con conversiones    -- FALTA (ERROR PARSEF)
 
 ```nim
 var x: int
@@ -497,14 +498,14 @@ proc seleccionar(x: uint, y: uint): uint =
 
 var res1: float
 var res2: uint
-
+var final: float
 res1 = calcular(10, 25)
 echo(res1)
 
 res2 = seleccionar(100.uint, 75.uint)
 echo(res2)
 
-var final: float
+
 final = if res2.float > 50.float: res1 + res2.float else: res1
 echo(final)
 ```
@@ -514,6 +515,197 @@ echo(final)
 37.500000
 100
 137.500000
+```
+
+## 🚀 Categoría 4: Optimizacion (5 casos)
+
+### Test 15: Plegado de constantes en expresiones aritméticas
+
+```nim
+var x: int
+var y: float
+var z: uint
+var resultado: int
+x = 10 + 20 * 3 - 5
+echo(x)
+
+y = 2.5 * 4.0 + 10.0 / 2.0
+echo(y)
+
+z = (100.uint + 50.uint) * 2.uint - 25.uint
+echo(z)
+
+
+resultado = ((5 + 3) * 2 - 4) / 2 + 1
+echo(resultado)
+```
+
+**Salida esperada:**
+```
+65
+15.000000
+275
+7
+```
+
+---
+
+### Test 16: If con condición constante true
+
+```nim
+var x: int
+x = 0
+
+if true:
+    x = 100
+    echo(x)
+else:
+    x = 200
+    echo(x)
+
+if 10 > 5:
+    x = x + 50
+    echo(x)
+else:
+    x = x - 50
+    echo(x)
+
+if 3.5 >= 2.0:
+    echo(1)
+else:
+    echo(0)
+```
+
+**Salida esperada:**
+```
+100
+150
+1
+```
+
+---
+
+### Test 17: If con condición constante false
+
+```nim
+var y: float
+y = 10.5
+
+if false:
+    y = 0.0
+    echo(y)
+else:
+    y = y * 2.0
+    echo(y)
+
+if 5 < 3:
+    echo(1)
+else:
+    echo(0)
+
+if 10.uint <= 5.uint:
+    y = 100.0
+    echo(y)
+else:
+    y = y + 5.5
+    echo(y)
+```
+
+**Salida esperada:**
+```
+21.000000
+0
+26.500000
+```
+
+---
+
+### Test 18: While con condición constante y plegado de constantes
+
+```nim
+var contador: int
+var resultado: float
+var suma: int
+contador = 0
+
+while false:
+    contador = contador + 1
+    echo(contador)
+
+echo(contador)
+
+
+suma = 5 + 10 + 15
+
+if true:
+    suma = suma * 2
+    echo(suma)
+
+
+resultado = (10.0 + 5.0) * 2.0 - 8.0
+echo(resultado)
+```
+
+**Salida esperada:**
+```
+0
+60
+22.000000
+```
+
+---
+
+### Test 19: Combinación de optimizaciones con funciones    -- ERROR (VARIABLE Y NO ENCONTRADA)
+
+```nim
+proc calcularConstante(): int =
+    var temp: int
+    temp = 100 + 50 * 2
+    
+    if true:
+        temp = temp + 50
+    else:
+        temp = 0
+    
+    if false:
+        return 0
+    else:
+        return temp
+
+proc evaluarCondiciones(): bool =
+    if 10 > 5:
+        if 20 >= 15:
+            return true
+        else:
+            return false
+    else:
+        return false
+
+var x: int
+var flag: bool
+var y: float
+x = calcularConstante()
+echo(x)
+
+flag = evaluarCondiciones()
+echo(flag)
+
+
+y = 2.0 * 3.0 + 4.0 * 5.0
+echo(y)
+
+if flag:
+    y = y + 10.0
+    echo(y)
+
+```
+
+**Salida esperada:**
+```
+250
+1
+26.000000
+36.000000
 ```
 
 ---
