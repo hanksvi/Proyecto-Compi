@@ -2,27 +2,20 @@
 Parseo exitoso
 
 === Iniciando impresión del programa ===
-var xfloat32: float32
-var a4: int
-var b4: int32
-var c4: float
-var d4: uint
-var e4: uint32
-var f4: bool
-xfloat32=15.5.float32
-a4=xfloat32.int
-b4=xfloat32.int32
-c4=xfloat32.float
-d4=xfloat32.uint
-e4=xfloat32.uint32
-f4=xfloat32.bool
-echo(xfloat32)
-echo(a4)
-echo(b4)
-echo(c4)
-echo(d4)
-echo(e4)
-echo(f4)
+var contador: int
+var resultado: float
+var suma: int
+contador=0
+while false: 
+  contador=contador + 1
+  echo(contador)
+echo(contador)
+suma=5 + 10 + 15
+if true: 
+  suma=suma * 2
+  echo(suma)
+resultado=10 + 5 * 2 - 8
+echo(resultado)
 
  ===Iniciando chequeo de tipos===
 Revisión exitosa
@@ -30,5 +23,10 @@ Revisión exitosa
 
  Generando codigo ensamblador en inputs/input4.s
 Revisión exitosa
+
+ Generando ejecutable 
+0
+60
+22
 
 === STDERR ===

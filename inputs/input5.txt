@@ -1,24 +1,39 @@
-var xuint: uint
-var a5: int
-var b5: int32
-var c5: float
-var d5: float32
-var e5: uint32
-var f5: bool
+proc calcularConstante(): int =
+    var temp: int
+    temp = 100 + 50 * 2
+    
+    if true:
+        temp = temp + 50
+    else:
+        temp = 0
+    
+    if false:
+        return 0
+    else:
+        return temp
 
-xuint = 200.uint
+proc evaluarCondiciones(): bool =
+    if 10 > 5:
+        if 20 >= 15:
+            return true
+        else:
+            return false
+    else:
+        return false
 
-a5 = xuint.int
-b5 = xuint.int32
-c5 = xuint.float
-d5 = xuint.float32
-e5 = xuint.uint32
-f5 = xuint.bool
+var x: int
+var flag: bool
+var y: float
+x = calcularConstante()
+echo(x)
 
-echo(xuint)
-echo(a5)
-echo(b5)
-echo(c5)
-echo(d5)
-echo(e5)
-echo(f5)
+flag = evaluarCondiciones()
+echo(flag)
+
+
+y = 2.0 * 3.0 + 4.0 * 5.0
+echo(y)
+
+if flag:
+    y = y + 10.0
+    echo(y)

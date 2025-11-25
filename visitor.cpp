@@ -251,8 +251,9 @@ int GenCodeVisitor::visit(IdExp* exp) {
             varType = variableTypes[exp->value];
         }
         
-        if(isInt32(varType) || isFloat32(varType)){
+        if(isInt32(varType) || isFloat32(varType) || varType == "uint32"){
             out << " movl "<<env.lookup(exp->value)<< "(%rbp), %eax\n";
+            // En x86-64, movl automáticamente hace zero-extend a %rax
         } else{
             out << " movq " << env.lookup(exp->value) << "(%rbp), %rax\n";
         }
@@ -263,8 +264,9 @@ int GenCodeVisitor::visit(IdExp* exp) {
             varType = globalVariableTypes[exp->value];
         }
         
-        if(isInt32(varType) || isFloat32(varType)){
+        if(isInt32(varType) || isFloat32(varType) || varType == "uint32"){
             out << " movl "<< exp->value << "(%rip), %eax\n";
+            // En x86-64, movl automáticamente hace zero-extend a %rax
         } else{
             out << " movq " << exp->value << "(%rip), %rax\n";
         }
@@ -278,6 +280,26 @@ int GenCodeVisitor::visit(IdExp* exp) {
 }
 
 int GenCodeVisitor::visit(BinaryExp* exp) {
+    // OPTIMIZACIÓN: Si la expresión completa es constante, cargar directamente
+    if (exp->isConstant) {
+        string tipo = obtenerTipoString(exp);
+        
+        if (isFloatType(tipo)) {
+            string labelName = "const_" + to_string(floatConstCounter++);
+            floatConstants[labelName] = make_pair(exp->constantValue, tipo);
+            
+            if (isFloat64(tipo)) {
+                out << " movsd " << labelName << "(%rip), %xmm0\n";
+                out << " movq %xmm0, %rax\n";
+            } else {
+                out << " movss " << labelName << "(%rip), %xmm0\n";
+                out << " movd %xmm0, %eax\n";
+            }
+        } else {
+            out << " movq $" << (int)exp->constantValue << ", %rax\n";
+        }
+        return 0;
+    }
     string leftType = obtenerTipoString(exp->left);
     string rightType = obtenerTipoString(exp->right);
     bool issFloat = isFloatType(leftType);
@@ -423,14 +445,18 @@ int GenCodeVisitor::visit(AssignStm* stm) {
 
     stm->e->accept(this);
 
+    // NO necesitas zero-extend aquí porque:
+    // 1. Si viene de un literal o expresión, ya está en %eax/%rax correctamente
+    // 2. movl automáticamente hace zero-extend en x86-64
+
     if (memoriaGlobal.count(stm->id)) {
-        if (isInt32(varType) || isFloat32(varType)) {
+        if (isInt32(varType) || isFloat32(varType) || varType == "uint32") {
             out << " movl %eax, " << stm->id << "(%rip)\n";
         } else {
             out << " movq %rax, " << stm->id << "(%rip)\n";
         }
     } else {
-        if (isInt32(varType) || isFloat32(varType)) {
+        if (isInt32(varType) || isFloat32(varType) || varType == "uint32") {
             out << " movl %eax, " << env.lookup(stm->id) << "(%rbp)\n";
         } else {
             out << " movq %rax, " << env.lookup(stm->id) << "(%rbp)\n";
@@ -439,6 +465,7 @@ int GenCodeVisitor::visit(AssignStm* stm) {
     
     return 0;
 }
+
 int GenCodeVisitor::visit(PrintStm* stm) {
     string exprType = obtenerTipoString(stm->e);
     
@@ -446,41 +473,45 @@ int GenCodeVisitor::visit(PrintStm* stm) {
     
     if (exprType == "float") {
         // Float 64 bits (double)
-        out << " movq %rax, %xmm0\n";           // mover a XMM
-        out << " movq $1, %rax\n";              // indicar 1 registro XMM usado
+        out << " movq %rax, %xmm0\n";
+        out << " movq $1, %rax\n";
         out << " leaq print_fmt_float(%rip), %rdi\n";
         out << " call printf@PLT\n";
         
     } else if (exprType == "float32") {
         // Float 32 bits
-        out << " movd %eax, %xmm0\n";           // mover 32 bits a XMM
-        out << " cvtss2sd %xmm0, %xmm0\n";      // convertir a double para printf
+        out << " movd %eax, %xmm0\n";
+        out << " cvtss2sd %xmm0, %xmm0\n";
         out << " movq $1, %rax\n";
         out << " leaq print_fmt_float(%rip), %rdi\n";
         out << " call printf@PLT\n";
         
-    } else if (exprType == "uint" || exprType == "uint32") {
-        // Unsigned (64 o 32 bits)
-        if (exprType == "uint32") {
-            out << " movl %eax, %eax\n";        // zero-extend 32→64
-        }
+    } else if (exprType == "uint32") {
+        // uint32 - movl ya hizo zero-extend automáticamente
+        out << " movq %rax, %rsi\n";
+        out << " leaq print_fmt_uint(%rip), %rdi\n";
+        out << " movl $0, %eax\n";
+        out << " call printf@PLT\n";
+        
+    } else if (exprType == "uint") {
+        // uint64
         out << " movq %rax, %rsi\n";
         out << " leaq print_fmt_uint(%rip), %rdi\n";
         out << " movl $0, %eax\n";
         out << " call printf@PLT\n";
         
     } else if (exprType == "bool") {
-    // Bool - imprimir 0 o 1
-    out << " movzbq %al, %rax\n";               // asegurar que solo sea 0 o 1
-    out << " movq %rax, %rsi\n";
-    out << " leaq print_fmt(%rip), %rdi\n";    // reutilizar formato de int
-    out << " movl $0, %eax\n";
-    out << " call printf@PLT\n";
+        // Bool - imprimir 0 o 1
+        out << " movzbq %al, %rax\n";
+        out << " movq %rax, %rsi\n";
+        out << " leaq print_fmt(%rip), %rdi\n";
+        out << " movl $0, %eax\n";
+        out << " call printf@PLT\n";
 
     } else {
         // Int o int32 (con signo)
         if (exprType == "int32") {
-            out << " movslq %eax, %rax\n";      // sign-extend 32→64
+            out << " movslq %eax, %rax\n";  // sign-extend 32→64
         }
         out << " movq %rax, %rsi\n";
         out << " leaq print_fmt(%rip), %rdi\n";
@@ -492,12 +523,32 @@ int GenCodeVisitor::visit(PrintStm* stm) {
 }
 
 int GenCodeVisitor::visit(FcallStm* stm) {
-    vector<std::string> argRegs = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
+    vector<std::string> argRegs64 = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
+    vector<std::string> argRegs32 = {"%edi", "%esi", "%edx", "%ecx", "%r8d", "%r9d"};
+    
+    FunDec* fd = nullptr;
+    for (auto& [nombre, dec] : tipe.functionDeclarations) {
+        if (nombre == stm->nombre) {
+            fd = dec;
+            break;
+        }
+    }
+    
     int size = stm->argumentos.size();
     for (int i = 0; i < size; i++) {
         stm->argumentos[i]->accept(this);
-        out << " mov %rax, " << argRegs[i] <<endl;
+        
+        if (fd && i < fd->Ptipos.size()) {
+            if (isInt32(fd->Ptipos[i]) || isFloat32(fd->Ptipos[i])) {
+                out << " movl %eax, " << argRegs32[i] << endl;
+            } else {
+                out << " movq %rax, " << argRegs64[i] << endl;
+            }
+        } else {
+            out << " movq %rax, " << argRegs64[i] << endl;
+        }
     }
+    
     out << "call " << stm->nombre << endl;
     return 0;
 }
@@ -520,6 +571,18 @@ int GenCodeVisitor::visit(Body* body) {
 }
 
 int GenCodeVisitor::visit(IfStm* stm) {
+    // OPTIMIZACIÓN: Si la condición es constante, no generar código condicional
+    if(stm->condition->isConstant){
+        if(stm->condition->constantValue != 0){
+            stm->then->accept(this);
+        }
+        else {
+            if(stm->els){
+                stm->els->accept(this);
+            }
+        }
+        return 0;
+    }
     int label = labelcont++;
     stm->condition->accept(this);
     out << " cmpq $0, %rax"<<endl;
@@ -533,6 +596,10 @@ int GenCodeVisitor::visit(IfStm* stm) {
 }
 
 int GenCodeVisitor::visit(WhileStm* stm) {
+    // OPTIMIZACIÓN 1: Si la condición es constante y falsa, no generar nada
+   if (stm->condition->isConstant && stm->condition->constantValue == 0) {
+        return 0;
+    }
     int label = labelcont++;
     out << "while_" << label << ":"<<endl;
     stm->condition->accept(this);
@@ -553,23 +620,23 @@ int GenCodeVisitor::visit(ReturnStm* stm) {
 }
 
 int GenCodeVisitor::visit(FunDec* fd) {
-    
     entornoFuncion = true;
-    variableTypes.clear();  // Limpiar tipos de variables locales
+    variableTypes.clear();
     
     offset = -8;
     nombreFuncion = fd->nombre;
-    vector<std::string> argRegs = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
+    vector<std::string> argRegs64 = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
+    vector<std::string> argRegs32 = {"%edi", "%esi", "%edx", "%ecx", "%r8d", "%r9d"};
+    
     out << ".globl " << fd->nombre << endl;
     out << fd->nombre <<  ":" << endl;
     out << " pushq %rbp" << endl;
     out << " movq %rsp, %rbp" << endl;
     out << " subq $" << fun_reserva[fd->nombre]*8 << ", %rsp" << endl;
     
-    // Agregar nuevo nivel de scope para la función
     env.add_level();
     
-        bool wasGlobal = enNivelGlobal;
+    bool wasGlobal = enNivelGlobal;
     enNivelGlobal = false;
 
     int size = fd->Pnombres.size();
@@ -577,21 +644,26 @@ int GenCodeVisitor::visit(FunDec* fd) {
         variableTypes[fd->Pnombres[i]] = fd->Ptipos[i];
         int paramSize = getSizeOfType(fd->Ptipos[i]);
         env.add_var(fd->Pnombres[i], offset);
-        out << " movq " << argRegs[i] << "," << offset << "(%rbp)" << endl;
+        
+        // Guardar según el tamaño del parámetro
+        if (isInt32(fd->Ptipos[i]) || isFloat32(fd->Ptipos[i])) {
+            out << " movl " << argRegs32[i] << "," << offset << "(%rbp)" << endl;
+        } else {
+            out << " movq " << argRegs64[i] << "," << offset << "(%rbp)" << endl;
+        }
+        
         offset -= paramSize;
     }
+    
     for (auto i: fd->cuerpo->declarations){
         i->accept(this);
     }
-    int reserva = -offset - 8;
 
     for (auto i: fd->cuerpo->StmList){
         i->accept(this);
     }
     
     enNivelGlobal = wasGlobal;
-
-    // Remover el nivel de scope de la función
     env.remove_level();
     
     out << ".end_"<< fd->nombre << ":"<< endl;
@@ -602,12 +674,32 @@ int GenCodeVisitor::visit(FunDec* fd) {
 }
 
 int GenCodeVisitor::visit(FcallExp* exp) {
-    vector<std::string> argRegs = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
+    vector<std::string> argRegs64 = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
+    vector<std::string> argRegs32 = {"%edi", "%esi", "%edx", "%ecx", "%r8d", "%r9d"};
+    
+    FunDec* fd = nullptr;
+    for (auto& [nombre, dec] : tipe.functionDeclarations) {
+        if (nombre == exp->nombre) {
+            fd = dec;
+            break;
+        }
+    }
+    
     int size = exp->argumentos.size();
     for (int i = 0; i < size; i++) {
         exp->argumentos[i]->accept(this);
-        out << " mov %rax, " << argRegs[i] <<endl;
+        
+        if (fd && i < fd->Ptipos.size()) {
+            if (isInt32(fd->Ptipos[i]) || isFloat32(fd->Ptipos[i])) {
+                out << " movl %eax, " << argRegs32[i] << endl;
+            } else {
+                out << " movq %rax, " << argRegs64[i] << endl;
+            }
+        } else {
+            out << " movq %rax, " << argRegs64[i] << endl;
+        }
     }
+    
     out << "call " << exp->nombre << endl;
     return 0;
 }
@@ -650,65 +742,127 @@ int GenCodeVisitor::visit(CastExp* exp){
 
     // ========== INT/UINT → FLOAT ==========
     
-    // int64/uint64 → float64
-    if ((origenType == "int" || origenType == "uint") && destiniType == "float") {
-        // %rax contiene el entero
-        out << " cvtsi2sd %rax, %xmm0\n";  // convertir a double en xmm0
-        out << " movq %xmm0, %rax\n";       // guardar bits en rax
+    // int64 → float64 (SIGNED)
+    if (origenType == "int" && destiniType == "float") {
+        out << " cvtsi2sdq %rax, %xmm0\n";  // signed int64 → double
+        out << " movq %xmm0, %rax\n";
         return 0;
     }
     
-    // int32/uint32 → float32
-    if ((origenType == "int32" || origenType == "uint32") && destiniType == "float32") {
-        out << " cvtsi2ss %eax, %xmm0\n";  // convertir a float en xmm0
-        out << " movd %xmm0, %eax\n";      // guardar bits en eax
-        out << " movl %eax, %eax\n";       // zero-extend
+    // uint64 → float64 (UNSIGNED) - REQUIERE MANEJO ESPECIAL
+    if (origenType == "uint" && destiniType == "float") {
+        // Para uint64, necesitamos usar vcvtusi2sd si está disponible
+        // O hacer conversión manual
+        out << " cvtsi2sdq %rax, %xmm0\n";  // Por ahora simple
+        out << " movq %xmm0, %rax\n";
         return 0;
     }
     
-    // int64/uint64 → float32
-    if ((origenType == "int" || origenType == "uint") && destiniType == "float32") {
-        out << " cvtsi2ss %rax, %xmm0\n";
+    // int32 → float32 (SIGNED)
+    if (origenType == "int32" && destiniType == "float32") {
+        out << " cvtsi2ss %eax, %xmm0\n";  // signed int32 → float
         out << " movd %xmm0, %eax\n";
         out << " movl %eax, %eax\n";
         return 0;
     }
     
-    // int32/uint32 → float64
-    if ((origenType == "int32" || origenType == "uint32") && destiniType == "float") {
+    // uint32 → float32 (UNSIGNED) - FIX CRÍTICO
+    if (origenType == "uint32" && destiniType == "float32") {
+        // Zero-extend a 64 bits primero
+        out << " movl %eax, %eax\n";  // zero-extend uint32 → uint64
+        out << " cvtsi2ssq %rax, %xmm0\n";  // convertir como int64 (ahora es positivo)
+        out << " movd %xmm0, %eax\n";
+        out << " movl %eax, %eax\n";
+        return 0;
+    }
+    
+    // int64 → float32 (SIGNED)
+    if (origenType == "int" && destiniType == "float32") {
+        out << " cvtsi2ssq %rax, %xmm0\n";
+        out << " movd %xmm0, %eax\n";
+        out << " movl %eax, %eax\n";
+        return 0;
+    }
+    
+    // uint64 → float32 (UNSIGNED)
+    if (origenType == "uint" && destiniType == "float32") {
+        out << " cvtsi2ssq %rax, %xmm0\n";
+        out << " movd %xmm0, %eax\n";
+        out << " movl %eax, %eax\n";
+        return 0;
+    }
+    
+    // int32 → float64 (SIGNED)
+    if (origenType == "int32" && destiniType == "float") {
         out << " cvtsi2sd %eax, %xmm0\n";
+        out << " movq %xmm0, %rax\n";
+        return 0;
+    }
+    
+    // uint32 → float64 (UNSIGNED) - FIX CRÍTICO
+    if (origenType == "uint32" && destiniType == "float") {
+        // Zero-extend a 64 bits primero
+        out << " movl %eax, %eax\n";  // zero-extend uint32 → uint64
+        out << " cvtsi2sdq %rax, %xmm0\n";  // convertir como int64 (ahora es positivo)
         out << " movq %xmm0, %rax\n";
         return 0;
     }
 
     // ========== FLOAT → INT/UINT ==========
     
-    // float64 → int64/uint64
-    if (origenType == "float" && (destiniType == "int" || destiniType == "uint")) {
-        // %rax contiene los bits del float
-        out << " movq %rax, %xmm0\n";       // mover bits a xmm0
-        out << " cvttsd2siq %xmm0, %rax\n";  // convertir double a int64
-        return 0;
-    }
-    
-    // float32 → int32/uint32
-    if (origenType == "float32" && (destiniType == "int32" || destiniType == "uint32")) {
-        out << " movd %eax, %xmm0\n";       // mover bits a xmm0
-        out << " cvttss2si %xmm0, %eax\n";  // convertir float a int32
-        return 0;
-    }
-    
-    // float64 → int32/uint32
-    if (origenType == "float" && (destiniType == "int32" || destiniType == "uint32")) {
+    // float64 → int64 (SIGNED)
+    if (origenType == "float" && destiniType == "int") {
         out << " movq %rax, %xmm0\n";
-        out << " cvttsd2si %xmm0, %eax\n";  // convertir double a int32
+        out << " cvttsd2siq %xmm0, %rax\n";
         return 0;
     }
     
-    // float32 → int64/uint64
-    if (origenType == "float32" && (destiniType == "int" || destiniType == "uint")) {
+    // float64 → uint64 (UNSIGNED)
+    if (origenType == "float" && destiniType == "uint") {
+        out << " movq %rax, %xmm0\n";
+        out << " cvttsd2siq %xmm0, %rax\n";  // truncar a int64
+        return 0;
+    }
+    
+    // float32 → int32 (SIGNED)
+    if (origenType == "float32" && destiniType == "int32") {
         out << " movd %eax, %xmm0\n";
-        out << " cvttss2si %xmm0, %rax\n";  // convertir float a int64
+        out << " cvttss2si %xmm0, %eax\n";
+        return 0;
+    }
+    
+    // float32 → uint32 (UNSIGNED)
+    if (origenType == "float32" && destiniType == "uint32") {
+        out << " movd %eax, %xmm0\n";
+        out << " cvttss2si %xmm0, %eax\n";
+        return 0;
+    }
+    
+    // float64 → int32 (SIGNED)
+    if (origenType == "float" && destiniType == "int32") {
+        out << " movq %rax, %xmm0\n";
+        out << " cvttsd2si %xmm0, %eax\n";
+        return 0;
+    }
+    
+    // float64 → uint32 (UNSIGNED)
+    if (origenType == "float" && destiniType == "uint32") {
+        out << " movq %rax, %xmm0\n";
+        out << " cvttsd2si %xmm0, %eax\n";
+        return 0;
+    }
+    
+    // float32 → int64 (SIGNED)
+    if (origenType == "float32" && destiniType == "int") {
+        out << " movd %eax, %xmm0\n";
+        out << " cvttss2siq %xmm0, %rax\n";
+        return 0;
+    }
+    
+    // float32 → uint64 (UNSIGNED)
+    if (origenType == "float32" && destiniType == "uint") {
+        out << " movd %eax, %xmm0\n";
+        out << " cvttss2siq %xmm0, %rax\n";
         return 0;
     }
 
@@ -717,7 +871,7 @@ int GenCodeVisitor::visit(CastExp* exp){
     // float32 → float64
     if (origenType == "float32" && destiniType == "float") {
         out << " movd %eax, %xmm0\n";
-        out << " cvtss2sd %xmm0, %xmm0\n";  // float → double
+        out << " cvtss2sd %xmm0, %xmm0\n";
         out << " movq %xmm0, %rax\n";
         return 0;
     }
@@ -725,7 +879,7 @@ int GenCodeVisitor::visit(CastExp* exp){
     // float64 → float32
     if (origenType == "float" && destiniType == "float32") {
         out << " movq %rax, %xmm0\n";
-        out << " cvtsd2ss %xmm0, %xmm0\n";  // double → float
+        out << " cvtsd2ss %xmm0, %xmm0\n";
         out << " movd %xmm0, %eax\n";
         out << " movl %eax, %eax\n";
         return 0;
@@ -745,6 +899,18 @@ int GenCodeVisitor::visit(CastExp* exp){
         return 0;
     }
     
+    // int32 → uint64 (sign extend primero)
+    if (origenType == "int32" && destiniType == "uint") {
+        out << " movslq %eax, %rax\n";
+        return 0;
+    }
+    
+    // uint32 → int64 (zero extend)
+    if (origenType == "uint32" && destiniType == "int") {
+        out << " movl %eax, %eax\n";
+        return 0;
+    }
+    
     // int64 → int32 (truncar)
     if (origenType == "int" && destiniType == "int32") {
         // Ya está en %eax (32 bits bajos)
@@ -754,6 +920,18 @@ int GenCodeVisitor::visit(CastExp* exp){
     // uint64 → uint32 (truncar)
     if (origenType == "uint" && destiniType == "uint32") {
         out << " movl %eax, %eax\n";
+        return 0;
+    }
+    
+    // int64 → uint32 (truncar)
+    if (origenType == "int" && destiniType == "uint32") {
+        out << " movl %eax, %eax\n";
+        return 0;
+    }
+    
+    // uint64 → int32 (truncar)
+    if (origenType == "uint" && destiniType == "int32") {
+        // Ya está en %eax
         return 0;
     }
 
@@ -803,6 +981,10 @@ int GenCodeVisitor::visit(CastExp* exp){
 
     return 0;
 }
+
+
+
+
 int GenCodeVisitor::visit(BoolExp* exp){
     out << " movq $" << (exp->valor ? 1 : 0) << ", %rax" << endl;
     return 0;   

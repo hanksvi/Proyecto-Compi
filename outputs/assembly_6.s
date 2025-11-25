@@ -17,17 +17,21 @@ main:
  pushq %rbp
  movq %rsp, %rbp
  movq $150, %rax
+ movl %eax, %eax
  movl %eax, xuint32(%rip)
  movl xuint32(%rip), %eax
+ movl %eax, %eax
  movq %rax, a6(%rip)
  movl xuint32(%rip), %eax
  movl %eax, b6(%rip)
  movl xuint32(%rip), %eax
- cvtsi2sd %eax, %xmm0
+ movl %eax, %eax
+ cvtsi2sdq %rax, %xmm0
  movq %xmm0, %rax
  movq %rax, c6(%rip)
  movl xuint32(%rip), %eax
- cvtsi2ss %eax, %xmm0
+ movl %eax, %eax
+ cvtsi2ssq %rax, %xmm0
  movd %xmm0, %eax
  movl %eax, %eax
  movl %eax, d6(%rip)
@@ -41,7 +45,6 @@ main:
  movzbq %al, %rax
  movq %rax, f6(%rip)
  movl xuint32(%rip), %eax
- movl %eax, %eax
  movq %rax, %rsi
  leaq print_fmt_uint(%rip), %rdi
  movl $0, %eax

@@ -2,27 +2,37 @@
 Parseo exitoso
 
 === Iniciando impresión del programa ===
-var xuint: uint
-var a5: int
-var b5: int32
-var c5: float
-var d5: float32
-var e5: uint32
-var f5: bool
-xuint=200.uint
-a5=xuint.int
-b5=xuint.int32
-c5=xuint.float
-d5=xuint.float32
-e5=xuint.uint32
-f5=xuint.bool
-echo(xuint)
-echo(a5)
-echo(b5)
-echo(c5)
-echo(d5)
-echo(e5)
-echo(f5)
+proc calcularConstante(): int = 
+  var temp: int
+  temp=100 + 50 * 2
+  if true: 
+    temp=temp + 50
+  else: 
+    temp=0
+  if false: 
+    return (0)
+  else: 
+    return (temp)
+proc evaluarCondiciones(): bool = 
+  if 10 > 5: 
+    if 20 >= 15: 
+      return (true)
+    else: 
+      return (false)
+  else: 
+    return (false)
+var x: int
+var flag: bool
+var y: float
+x=calcularConstante()
+echo(x)
+flag=evaluarCondiciones()
+echo(flag)
+y=2 * 3 + 4 * 5
+echo(y)
+if flag: 
+  y=y + 10
+  echo(y)
 
  ===Iniciando chequeo de tipos===
 Revisión exitosa
@@ -32,3 +42,4 @@ Revisión exitosa
 Revisión exitosa
 
 === STDERR ===
+Error: variable 'y' no encontrada.

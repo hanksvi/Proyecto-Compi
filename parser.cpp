@@ -394,12 +394,14 @@ Exp* Parser::parseF() {
     {
         BoolExp* e = new BoolExp();
         e->valor = 1;
+        e->constantValue = 1;
         return e;
     }
     else if (match(Token::FALSE))
     {
         BoolExp* e = new BoolExp();
         e->valor = 0;
+        e->constantValue = 0;
         return e;
     }
     else if(match(Token::FLOAT)){
@@ -416,12 +418,7 @@ Exp* Parser::parseF() {
         return new NumberExp(floatValue);
     }
     
-    else if (match(Token::TRUE)) {
-        return new NumberExp(1);
-    }
-    else if (match(Token::FALSE)) {
-        return new NumberExp(0);
-    }
+    
     else if (match(Token::LPAREN))
     {
         e = parseCE();

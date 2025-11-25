@@ -25,7 +25,52 @@ string Exp::binopToChar(BinaryOp op) {
 
 // ------------------ BinaryExp ------------------
 BinaryExp::BinaryExp(Exp* l, Exp* r, BinaryOp o)
-    : left(l), right(r), op(o) {}
+    : left(l), right(r), op(o) {
+          if (l->isConstant && r->isConstant) {
+        isConstant = true;
+        
+        switch (op) {
+            case PLUS_OP:
+                constantValue = l->constantValue + r->constantValue;
+                break;
+            case MINUS_OP:
+                constantValue = l->constantValue - r->constantValue;
+                break;
+            case MUL_OP:
+                constantValue = l->constantValue * r->constantValue;
+                break;
+            case DIV_OP:
+                if (r->constantValue == 0) {
+                    cerr << "Error: división por cero en plegado de constantes" << endl;
+                    isConstant = false;
+                } else {
+                    constantValue = l->constantValue / r->constantValue;
+                }
+                break;
+            case LS_OP:
+                constantValue = (l->constantValue < r->constantValue) ? 1 : 0;
+                break;
+            case LSEQ_OP:
+                constantValue = (l->constantValue <= r->constantValue) ? 1 : 0;
+                break;
+            case GR_OP:
+                constantValue = (l->constantValue > r->constantValue) ? 1 : 0;
+                break;
+            case GREQ_OP:
+                constantValue = (l->constantValue >= r->constantValue) ? 1 : 0;
+                break;
+            case EQ_OP:
+                constantValue = (l->constantValue == r->constantValue) ? 1 : 0;
+                break;
+            default:
+                isConstant = false;
+                break;
+        }
+    }else {
+        isConstant = false;
+        constantValue = 0;
+    }
+}
 
     
 BinaryExp::~BinaryExp() {
@@ -36,14 +81,23 @@ BinaryExp::~BinaryExp() {
 
 
 // ------------------ NumberExp ------------------
-NumberExp::NumberExp(int v) : value(v), isFloat(false){}
-NumberExp::NumberExp(double v) : value(v), isFloat(true) {}
+NumberExp::NumberExp(int v) : value(v), isFloat(false){
+    isConstant = true;
+    constantValue = v;
+}
+NumberExp::NumberExp(double v) : value(v), isFloat(true) {
+    isConstant = true;
+    constantValue = v;
+}
 
 NumberExp::~NumberExp() {}
 
 
 // ------------------idExp ------------------
-IdExp::IdExp(string v) : value(v) {}
+IdExp::IdExp(string v) : value(v) {
+    isConstant = false;
+    constantValue = 0;
+}
 
 IdExp::~IdExp() {}
 

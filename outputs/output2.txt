@@ -2,22 +2,24 @@
 Parseo exitoso
 
 === Iniciando impresión del programa ===
-proc factorialUint(n:uint): uint = 
-  if n <= 1.uint: 
-    return (1.uint)
-  else: 
-    return (n * factorialUint(n - 1.uint))
-proc potencia(base:float, exp:int): float = 
-  if exp == 0: 
-    return (1.float)
-  else: 
-    return (base * potencia(base,exp - 1))
-var fact: uint
-var pot: float
-fact=factorialUint(5.uint)
-echo(fact)
-pot=potencia(2.5,3)
-echo(pot)
+var x: int
+x=0
+if true: 
+  x=100
+  echo(x)
+else: 
+  x=200
+  echo(x)
+if 10 > 5: 
+  x=x + 50
+  echo(x)
+else: 
+  x=x - 50
+  echo(x)
+if 3.5 >= 2: 
+  echo(1)
+else: 
+  echo(0)
 
  ===Iniciando chequeo de tipos===
 Revisión exitosa
@@ -25,5 +27,10 @@ Revisión exitosa
 
  Generando codigo ensamblador en inputs/input2.s
 Revisión exitosa
+
+ Generando ejecutable 
+100
+150
+1
 
 === STDERR ===

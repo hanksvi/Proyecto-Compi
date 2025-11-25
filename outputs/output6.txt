@@ -31,4 +31,17 @@ Revisión exitosa
  Generando codigo ensamblador en inputs/input6.s
 Revisión exitosa
 
+ Generando ejecutable 
+0
+0
+0
+0
+0
+0
+0
+
 === STDERR ===
+Error: cast a tipo 'uint32' no soportado
+Error: cast a tipo 'int32' no soportado
+Error: cast a tipo 'float32' no soportado
+Error: cast a tipo 'uint' no soportado

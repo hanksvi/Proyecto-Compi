@@ -1,20 +1,21 @@
-proc factorialUint(n: uint): uint =
-    if n <= 1.uint:
-        return 1.uint
-    else:
-        return n * factorialUint(n - 1.uint)
+var x: int
+x = 0
 
-proc potencia(base: float, exp: int): float =
-    if exp == 0:
-        return 1.float
-    else:
-        return base * potencia(base, exp - 1)
+if true:
+    x = 100
+    echo(x)
+else:
+    x = 200
+    echo(x)
 
-var fact: uint
-var pot: float
+if 10 > 5:
+    x = x + 50
+    echo(x)
+else:
+    x = x - 50
+    echo(x)
 
-fact = factorialUint(5.uint)
-echo(fact)
-
-pot = potencia(2.5, 3)
-echo(pot)
+if 3.5 >= 2.0:
+    echo(1)
+else:
+    echo(0)

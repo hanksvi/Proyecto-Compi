@@ -29,10 +29,13 @@ enum BinaryOp {
 // Clase abstracta Exp
 class Exp {
 public:
+    bool isConstant;
+    double constantValue;
     virtual int  accept(Visitor* visitor) = 0;
     virtual Type* accept(TypeVisitor* visitor) = 0; 
     virtual ~Exp() = 0;  // Destructor puro → clase abstracta
     static string binopToChar(BinaryOp op);  // Conversión operador → string
+    Exp() : isConstant(false), constantValue(0) {}
 };
 
 // Expresión binaria
@@ -80,7 +83,37 @@ public:
     Exp* condicion;
     Exp* then;
     Exp* els;
-    IfExp(Exp* condicion, Exp* then, Exp* els) : condicion(condicion), then(then), els(els) {};
+    IfExp(Exp* condicion, Exp* then, Exp* els) : condicion(condicion), then(then), els(els) {
+        // Si la condición es constante, podemos evaluar en tiempo de compilación
+        if (condicion->isConstant) {
+            if (condicion->constantValue != 0) {
+                // Condición verdadera
+                if (then->isConstant) {
+                    isConstant = true;
+                    constantValue = then->constantValue;
+                } else {
+                    isConstant = false;
+                }
+            } else {
+                // Condición falsa
+                if (els->isConstant) {
+                    isConstant = true;
+                    constantValue = els->constantValue;
+                } else {
+                    isConstant = false;
+                }
+            }
+        } 
+        // Si la condición no es constante pero ambas ramas son constantes con el mismo valor
+        else if (then->isConstant && els->isConstant && 
+                then->constantValue == els->constantValue) {
+            isConstant = true;
+            constantValue = then->constantValue;
+        } else {
+            isConstant = false;
+            constantValue = 0;
+        }
+    };
     int accept(Visitor* visitor);
     Type* accept(TypeVisitor* visitor);
     ~IfExp(){};
@@ -90,7 +123,23 @@ class CastExp: public Exp {
 public:
     string tipo;
     Exp* e;
-    CastExp(string tipo, Exp* exp): tipo(tipo), e(exp){};
+    CastExp(string tipo, Exp* exp): tipo(tipo), e(exp){
+        if (exp->isConstant) {
+            isConstant = true;
+            constantValue = exp->constantValue;
+            
+            // Aplicar conversión de tipo si es necesario
+            if (tipo == "int" || tipo == "int32") {
+                constantValue = (int)constantValue;
+            } else if (tipo == "bool") {
+                constantValue = (constantValue != 0) ? 1 : 0;
+            }
+            // float, float32, uint, uint32 mantienen el valor
+        } else {
+            isConstant = false;
+            constantValue = 0;
+        }
+    };
     int accept(Visitor* visitor);
     Type* accept(TypeVisitor* visitor);
     ~CastExp(){};
@@ -197,7 +246,10 @@ public:
     vector<Exp*> argumentos;
     int accept(Visitor* visitor);
     Type* accept(TypeVisitor* visitor);
-    FcallExp(){};
+    FcallExp(){
+        isConstant = false;
+        constantValue = 0;
+    };
     ~FcallExp(){};
 };
 
@@ -205,7 +257,10 @@ class BoolExp : public Exp {
 public:
     int valor;
 
-    BoolExp(){};
+    BoolExp(){
+        isConstant = true;
+         constantValue = 0;
+    };
     ~BoolExp(){};
 
     int accept(Visitor* visitor);

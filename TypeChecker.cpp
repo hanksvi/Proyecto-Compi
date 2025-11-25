@@ -174,10 +174,9 @@ void TypeChecker::visit(FunDec* f){
     }
     f->cuerpo->accept(this);
     
-
-    // cuenta de variables en funcion (en bytes)
-    fun_locales[f->nombre] = (parametros + locales) / 8;  // Convertir a número de slots de 8 bytes
-
+    // CORRECCIÓN: Calcular slots correctamente con redondeo hacia arriba
+    int totalBytes = parametros + locales;
+    fun_locales[f->nombre] = (totalBytes + 7) / 8;  // Redondeo hacia arriba a slots de 8 bytes
 
     currentNameFun = previousName;
     currentTypeFun = previousType;

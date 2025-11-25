@@ -83,7 +83,9 @@ int main(int argc, const char* argv[]) {
     codigo.generar(program);
     outfile.close();
 
- 
+    cout<< "\n Generando ejecutable \n";
+    EVALVisitor ev;
+    int result = program->accept(&ev);
     
     
     return 0;

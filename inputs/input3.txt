@@ -1,22 +1,21 @@
-proc operacionCompleja(x: int32, y: float32, z: uint32): float =
-    var temp1: float
-    var temp2: float
-    
-    temp1 = x.float + y.float
-    temp2 = z.float * 2.float
-    
-    return temp1 + temp2
+var y: float
+y = 10.5
 
-var a: int32
-var b: float32
-var c: uint32
-var res: float
+if false:
+    y = 0.0
+    echo(y)
+else:
+    y = y * 2.0
+    echo(y)
 
-a = 10.int32
-b = 3.5.float32
-c = 25.uint32
-echo(a)
-echo(b)
-echo(c)
-res = operacionCompleja(a, b, c)
-echo(res)
+if 5 < 3:
+    echo(1)
+else:
+    echo(0)
+
+if 10.uint <= 5.uint:
+    y = 100.0
+    echo(y)
+else:
+    y = y + 5.5
+    echo(y)

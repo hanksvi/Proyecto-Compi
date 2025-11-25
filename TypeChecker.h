@@ -62,7 +62,7 @@ class TypeChecker : public TypeVisitor {
 private:
     Environment<Type*> env;                 // Entorno de variables y sus tipos
     unordered_map<string, Type*> functions; // Entorno de funciones
-    unordered_map<string, FunDec*> functionDeclarations;
+    
     unordered_map<Exp*, Type*> expressionTypes; // guarda los tipos de cada expresion
     // Tipos básicos
     Type* intType;
@@ -86,6 +86,7 @@ private:
 
 public:
     unordered_map<string,int> fun_locales;
+    unordered_map<string, FunDec*> functionDeclarations;
     int locales;
     TypeChecker();
 
