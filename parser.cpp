@@ -318,10 +318,34 @@ Exp* Parser::parseIf(){
         match(Token::IF);
         then = parseCE();
         match(Token::COLON);
-        e1 = parseBE();
+        
+
+        while(match(Token::NEWLINE)) {} 
+        if(check(Token::INDENT)) {
+            match(Token::INDENT);
+            e1 = parseIf();  
+            while(match(Token::NEWLINE)) {} 
+            match(Token::DEDENT);
+            while(match(Token::NEWLINE)) {} 
+        } else {
+            e1 = parseIf();  
+        }
+        
         match(Token::ELSE);
         match(Token::COLON);
-        e2 = parseBE();
+        
+        
+        while(match(Token::NEWLINE)) {} 
+        if(check(Token::INDENT)) {
+            match(Token::INDENT);
+            e2 = parseIf();  
+            while(match(Token::NEWLINE)) {} 
+            match(Token::DEDENT);
+            while(match(Token::NEWLINE)) {} 
+        } else {
+            e2 = parseIf(); 
+        }
+        
         return new IfExp(then,e1,e2);
     }
     else{

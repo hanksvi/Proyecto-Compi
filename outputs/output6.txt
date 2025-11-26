@@ -2,27 +2,20 @@
 Parseo exitoso
 
 === Iniciando impresión del programa ===
-var xuint32: uint32
-var a6: int
-var b6: int32
-var c6: float
-var d6: float32
-var e6: uint
-var f6: bool
-xuint32=150.uint32
-a6=xuint32.int
-b6=xuint32.int32
-c6=xuint32.float
-d6=xuint32.float32
-e6=xuint32.uint
-f6=xuint32.bool
-echo(xuint32)
-echo(a6)
-echo(b6)
-echo(c6)
-echo(d6)
-echo(e6)
-echo(f6)
+var contador: int
+var resultado: float
+var suma: int
+contador=0
+while false: 
+  contador=contador + 1
+  echo(contador)
+echo(contador)
+suma=5 + 10 + 15
+if true: 
+  suma=suma * 2
+  echo(suma)
+resultado=10 + 5 * 2 - 8
+echo(resultado)
 
  ===Iniciando chequeo de tipos===
 Revisión exitosa
@@ -33,15 +26,7 @@ Revisión exitosa
 
  Generando ejecutable 
 0
-0
-0
-0
-0
-0
-0
+60
+22.000000
 
 === STDERR ===
-Error: cast a tipo 'uint32' no soportado
-Error: cast a tipo 'int32' no soportado
-Error: cast a tipo 'float32' no soportado
-Error: cast a tipo 'uint' no soportado

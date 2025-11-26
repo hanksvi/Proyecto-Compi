@@ -1,21 +1,21 @@
-var contador: int
-var resultado: float
-var suma: int
-contador = 0
-
-while false:
-    contador = contador + 1
-    echo(contador)
-
-echo(contador)
-
-
-suma = 5 + 10 + 15
+var x: int
+x = 0
 
 if true:
-    suma = suma * 2
-    echo(suma)
+    x = 100
+    echo(x)
+else:
+    x = 200
+    echo(x)
 
+if 10 > 5:
+    x = x + 50
+    echo(x)
+else:
+    x = x - 50
+    echo(x)
 
-resultado = (10.0 + 5.0) * 2.0 - 8.0
-echo(resultado)
+if 3.5 >= 2.0:
+    echo(1)
+else:
+    echo(0)

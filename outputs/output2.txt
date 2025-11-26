@@ -2,24 +2,21 @@
 Parseo exitoso
 
 === Iniciando impresión del programa ===
-var x: int
-x=0
-if true: 
-  x=100
-  echo(x)
-else: 
-  x=200
-  echo(x)
-if 10 > 5: 
-  x=x + 50
-  echo(x)
-else: 
-  x=x - 50
-  echo(x)
-if 3.5 >= 2: 
-  echo(1)
-else: 
-  echo(0)
+proc calcular(a:int, b:int): float = 
+  var temp: float
+  temp=if a > b: a.float else: b.float
+  return (temp * 1.5)
+proc seleccionar(x:uint, y:uint): uint = 
+  return (if x > y: x else: y)
+var res1: float
+var res2: uint
+var final: float
+res1=calcular(10,25)
+echo(res1)
+res2=seleccionar(100.uint,75.uint)
+echo(res2)
+final=if res2.float > 50.float: res1 + res2.float else: res1
+echo(final)
 
  ===Iniciando chequeo de tipos===
 Revisión exitosa
@@ -29,8 +26,8 @@ Revisión exitosa
 Revisión exitosa
 
  Generando ejecutable 
+37.500000
 100
-150
-1
+137.500000
 
 === STDERR ===

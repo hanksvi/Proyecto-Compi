@@ -202,7 +202,31 @@ void TypeChecker::visit(AssignStm* stm){
     }
     Type* idd = env.lookup(stm->id);
     Type* exp = stm->e->accept(this);
-    if(!idd->match(exp)){
+    
+    // Permitir coerción de tipos numéricos compatibles
+    bool compatible = false;
+    
+    if(idd->match(exp)) {
+        compatible = true;
+    }
+    // Permitir coerción de int a int32, uint, uint32
+    else if((idd->toString() == "int32" || idd->toString() == "uint32" || idd->toString() == "uint") && 
+            (exp->toString() == "int" || exp->toString() == "uint" || exp->toString() == "int32" || exp->toString() == "uint32")) {
+        compatible = true;
+    }
+    // Permitir coerción de float a float32
+    else if((idd->toString() == "float32") && 
+            (exp->toString() == "float" || exp->toString() == "float32")) {
+        compatible = true;
+    }
+    // Permitir coerción entre tipos flotantes e int a float
+    else if((idd->toString() == "float" || idd->toString() == "float32") && 
+            (exp->toString() == "float" || exp->toString() == "float32" || exp->toString() == "int" || 
+             exp->toString() == "int32" || exp->toString() == "uint" || exp->toString() == "uint32")) {
+        compatible = true;
+    }
+    
+    if(!compatible){
         cerr << "Error: tipos incompatibles en asignacion a "<<stm->id
         <<" (debe ser tipo "<<idd->toString()<<")"<< "."<< endl;
         exit(0);
@@ -309,29 +333,58 @@ Type* TypeChecker::visit(BinaryExp* e) {
         case PLUS_OP: 
         case MINUS_OP: 
         case MUL_OP: 
-        case DIV_OP: 
-            if (!(left->match(right))) {
-                cerr << "Error: operación aritmética requiere operandos del mismo tipo." << endl;
+        case DIV_OP: {
+            // Verificar que ambos operandos sean tipos numéricos válidos
+            bool leftIsNumeric = (left->match(intType) || left->match(floatType) || left->match(int32Type) 
+                    || left->match(float32Type) || left->match(uintType) || left->match(uint32Type));
+            bool rightIsNumeric = (right->match(intType) || right->match(floatType) || right->match(int32Type) 
+                    || right->match(float32Type) || right->match(uintType) || right->match(uint32Type));
+            
+            if (!leftIsNumeric || !rightIsNumeric) {
+                cerr << "Error: operación aritmética requiere operandos tipo válido." << endl;
                 exit(0);
             }
-            if (!(left->match(intType) || left->match(floatType) || left->match(int32Type) 
-                    || left->match(float32Type) || left->match(uintType) || left->match(uint32Type))){
-                cerr << "Error: operación aritmética requiere operandos tipo valido." << endl;
-                exit(0);
-                }
-            resulType = left;
+            
+            // Permitir operaciones entre tipos compatibles
+            // Si los tipos son exactamente iguales, usar ese tipo
+            if (left->match(right)) {
+                resulType = left;
+            }
+            // Si uno es float y el otro es int (o variante), resultado es float
+            else if ((left->toString() == "float" || left->toString() == "float32") && 
+                     (right->toString() == "int" || right->toString() == "int32" || 
+                      right->toString() == "uint" || right->toString() == "uint32")) {
+                resulType = left;
+            }
+            else if ((right->toString() == "float" || right->toString() == "float32") && 
+                     (left->toString() == "int" || left->toString() == "int32" || 
+                      left->toString() == "uint" || left->toString() == "uint32")) {
+                resulType = right;
+            }
+            // Si ambos son int variants o uint variants, usar el de la izquierda
+            else {
+                resulType = left;
+            }
             break;
+        }
         case LS_OP:    
         case LSEQ_OP:
         case GR_OP:
         case GREQ_OP:  
-        case EQ_OP:
-            if (!(left->match(right))) {
-                cerr << "Error: operación aritmética requiere operandos del mismo tipo." << endl;
+        case EQ_OP: {
+            // Para comparaciones, permitir tipos numéricos compatibles
+            bool leftIsNumeric = (left->match(intType) || left->match(floatType) || left->match(int32Type) 
+                    || left->match(float32Type) || left->match(uintType) || left->match(uint32Type));
+            bool rightIsNumeric = (right->match(intType) || right->match(floatType) || right->match(int32Type) 
+                    || right->match(float32Type) || right->match(uintType) || right->match(uint32Type));
+            
+            if (!leftIsNumeric || !rightIsNumeric) {
+                cerr << "Error: comparación requiere operandos numéricos." << endl;
                 exit(0);
             }
-            resulType= boolType;
+            resulType = boolType;
             break;
+        }
         default:
             cerr << "Error: operador binario no soportado." << endl;
             exit(0);

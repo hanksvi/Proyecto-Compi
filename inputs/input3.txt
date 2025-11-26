@@ -1,21 +1,16 @@
+var x: int
 var y: float
-y = 10.5
+var z: uint
+var resultado: int
+x = 10 + 20 * 3 - 5
+echo(x)
 
-if false:
-    y = 0.0
-    echo(y)
-else:
-    y = y * 2.0
-    echo(y)
+y = 2.5 * 4.0 + 10.0 / 2.0
+echo(y)
 
-if 5 < 3:
-    echo(1)
-else:
-    echo(0)
+z = (100.uint + 50.uint) * 2.uint - 25.uint
+echo(z)
 
-if 10.uint <= 5.uint:
-    y = 100.0
-    echo(y)
-else:
-    y = y + 5.5
-    echo(y)
+
+resultado = ((5 + 3) * 2 - 4) / 2 + 1
+echo(resultado)

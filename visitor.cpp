@@ -2,6 +2,8 @@
 #include "ast.h"
 #include "visitor.h"
 #include <unordered_map>
+#include <cstdint>
+#include <iomanip>
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -245,8 +247,9 @@ int GenCodeVisitor::visit(NumberExp* exp) {
 int GenCodeVisitor::visit(IdExp* exp) {
     string varType = "";
     
-    if(env.check_local(exp->value)){
-        // Variable local
+    // Primero intentar buscar como variable local/parámetro (en cualquier nivel del ambiente)
+    if(env.check(exp->value)){
+        // Variable local o parámetro
         if(variableTypes.count(exp->value)){
             varType = variableTypes[exp->value];
         }
@@ -280,7 +283,7 @@ int GenCodeVisitor::visit(IdExp* exp) {
 }
 
 int GenCodeVisitor::visit(BinaryExp* exp) {
-    // OPTIMIZACIÓN: Si la expresión completa es constante, cargar directamente
+
     if (exp->isConstant) {
         string tipo = obtenerTipoString(exp);
         
@@ -445,9 +448,6 @@ int GenCodeVisitor::visit(AssignStm* stm) {
 
     stm->e->accept(this);
 
-    // NO necesitas zero-extend aquí porque:
-    // 1. Si viene de un literal o expresión, ya está en %eax/%rax correctamente
-    // 2. movl automáticamente hace zero-extend en x86-64
 
     if (memoriaGlobal.count(stm->id)) {
         if (isInt32(varType) || isFloat32(varType) || varType == "uint32") {
@@ -740,7 +740,6 @@ int GenCodeVisitor::visit(CastExp* exp){
         return 0;    
     }
 
-    // ========== INT/UINT → FLOAT ==========
     
     // int64 → float64 (SIGNED)
     if (origenType == "int" && destiniType == "float") {
@@ -751,8 +750,7 @@ int GenCodeVisitor::visit(CastExp* exp){
     
     // uint64 → float64 (UNSIGNED) - REQUIERE MANEJO ESPECIAL
     if (origenType == "uint" && destiniType == "float") {
-        // Para uint64, necesitamos usar vcvtusi2sd si está disponible
-        // O hacer conversión manual
+
         out << " cvtsi2sdq %rax, %xmm0\n";  // Por ahora simple
         out << " movq %xmm0, %rax\n";
         return 0;
@@ -768,9 +766,8 @@ int GenCodeVisitor::visit(CastExp* exp){
     
     // uint32 → float32 (UNSIGNED) - FIX CRÍTICO
     if (origenType == "uint32" && destiniType == "float32") {
-        // Zero-extend a 64 bits primero
-        out << " movl %eax, %eax\n";  // zero-extend uint32 → uint64
-        out << " cvtsi2ssq %rax, %xmm0\n";  // convertir como int64 (ahora es positivo)
+        out << " movl %eax, %eax\n";  
+        out << " cvtsi2ssq %rax, %xmm0\n";  
         out << " movd %xmm0, %eax\n";
         out << " movl %eax, %eax\n";
         return 0;
@@ -808,7 +805,6 @@ int GenCodeVisitor::visit(CastExp* exp){
         return 0;
     }
 
-    // ========== FLOAT → INT/UINT ==========
     
     // float64 → int64 (SIGNED)
     if (origenType == "float" && destiniType == "int") {
@@ -866,7 +862,6 @@ int GenCodeVisitor::visit(CastExp* exp){
         return 0;
     }
 
-    // ========== FLOAT32 ↔ FLOAT64 ==========
     
     // float32 → float64
     if (origenType == "float32" && destiniType == "float") {
@@ -885,7 +880,6 @@ int GenCodeVisitor::visit(CastExp* exp){
         return 0;
     }
 
-    // ========== INT32 ↔ INT64 ==========
     
     // int32 → int64 (con extensión de signo)
     if (origenType == "int32" && destiniType == "int") {
@@ -935,7 +929,6 @@ int GenCodeVisitor::visit(CastExp* exp){
         return 0;
     }
 
-    // ========== INT ↔ UINT (mismo tamaño) ==========
     
     if ((origenType == "int" && destiniType == "uint") ||
         (origenType == "uint" && destiniType == "int") ||
@@ -945,7 +938,6 @@ int GenCodeVisitor::visit(CastExp* exp){
         return 0;
     }
 
-    // ========== CONVERSIONES A BOOL ==========
     
     if (destiniType == "bool") {
         if (isFloatType(origenType)) {
@@ -1192,27 +1184,41 @@ void PrintVisitor::imprimir(Program* programa) {
 ////////////////////////////////////////////////////////////////
 //EVALVisitor
 ////////////////////////////////////////////////////////////////
-unordered_map<string, int> variablesGlobales;
-unordered_map<string, int> variablesLocales;
+unordered_map<string, double> variablesGlobales;
+unordered_map<string, double> variablesLocales;
+unordered_map<string, string> tiposVariablesGlobales;   // Tipos de variables globales
+unordered_map<string, string> tiposVariablesLocales;    // Tipos de variables locales
 
 unordered_map<string, FunDec*> tablaDeFunciones;
 
-int valorRetorno = 0;
+double valorRetorno = 0;
+double ultimoValorFloat = 0;  // Almacenar último valor float
+string ultimoTipo = "int";    // Almacenar tipo de última expresión
 bool hayRetorno = false;
-int scopeDepth = 0;  // Track scope depth: 0 = global, >0 = local
+int scopeDepth = 0;  
 
 int EVALVisitor::visit(NumberExp* exp) {
-    return exp->value;
+    ultimoValorFloat = exp->value;
+    // Si tiene punto decimal o fue marcado como float, es float
+    ultimoTipo = exp->isFloat ? "float" : "int";
+    return (int)exp->value;
 }
 int EVALVisitor::visit(IdExp* exp) {
+    double val = 0;
+    string tipo = "int";
     if (variablesLocales.count(exp->value)) {
-        return variablesLocales[exp->value];
+        val = variablesLocales[exp->value];
+        tipo = tiposVariablesLocales[exp->value];
     } else if (variablesGlobales.count(exp->value)) {
-        return variablesGlobales[exp->value];
+        val = variablesGlobales[exp->value];
+        tipo = tiposVariablesGlobales[exp->value];
     } else {
         cerr << "Error: variable '" << exp->value << "' no declarada" << endl;
         return 0;
     }
+    ultimoValorFloat = val;
+    ultimoTipo = tipo;
+    return (int)val;
 }
 
 int EVALVisitor::visit(BoolExp* exp) {
@@ -1221,48 +1227,95 @@ int EVALVisitor::visit(BoolExp* exp) {
 
 
 int EVALVisitor::visit(BinaryExp* exp) {
-    int izq = exp->left->accept(this);
-    int der = exp->right->accept(this);
+    double izq = ultimoValorFloat;  // Obtener valor float del izquierdo
+    exp->left->accept(this);
+    double izqVal = ultimoValorFloat;
+    string izqTipo = ultimoTipo;
+    
+    double der = ultimoValorFloat;  // Obtener valor float del derecho
+    exp->right->accept(this);
+    double derVal = ultimoValorFloat;
+    string derTipo = ultimoTipo;
+    
+    double resultado = 0;
+    // Determinar tipo del resultado
+    if (izqTipo == "float" || izqTipo == "float32" || derTipo == "float" || derTipo == "float32") {
+        ultimoTipo = "float";
+    } else if (exp->op >= LS_OP && exp->op <= EQ_OP) {
+        // Comparaciones siempre dan bool, pero lo representamos como int
+        ultimoTipo = "bool";
+    } else {
+        ultimoTipo = "int";
+    }
     
     switch (exp->op) {
-        case PLUS_OP:   return izq + der;
-        case MINUS_OP:  return izq - der;
-        case MUL_OP:    return izq * der;
+        case PLUS_OP:   resultado = izqVal + derVal; break;
+        case MINUS_OP:  resultado = izqVal - derVal; break;
+        case MUL_OP:    resultado = izqVal * derVal; break;
         case DIV_OP:    
-            if (der == 0) {
+            if (derVal == 0) {
                 cerr << "Error: división por cero" << endl;
-                return 0;
+                resultado = 0;
+            } else {
+                resultado = izqVal / derVal;
             }
-            return izq / der;
-        case LS_OP:     return izq < der ? 1 : 0;
-        case LSEQ_OP:   return izq <= der ? 1 : 0;
-        case GR_OP:     return izq > der ? 1 : 0;
-        case GREQ_OP:   return izq >= der ? 1 : 0;
-        case EQ_OP:     return izq == der ? 1 : 0;
-        default:        return 0;
+            break;
+        case LS_OP:     resultado = izqVal < derVal ? 1 : 0; break;
+        case LSEQ_OP:   resultado = izqVal <= derVal ? 1 : 0; break;
+        case GR_OP:     resultado = izqVal > derVal ? 1 : 0; break;
+        case GREQ_OP:   resultado = izqVal >= derVal ? 1 : 0; break;
+        case EQ_OP:     resultado = izqVal == derVal ? 1 : 0; break;
+        default:        resultado = 0;
     }
+    ultimoValorFloat = resultado;
+    return (int)resultado;
 }
 
 int EVALVisitor::visit(IfExp* exp) {
-    if(exp->condicion->accept(this)){
+    int cond = exp->condicion->accept(this);
+    if(cond){
         exp->then->accept(this);
+        return 1;
     }
     else if(exp->els != nullptr){
         exp->els->accept(this);
+        return 1;
     }
     return 0;
 };
 
 
 int EVALVisitor::visit(CastExp* exp) {
-    double valor = exp->e->accept(this);
+    exp->e->accept(this);
+    double valor = ultimoValorFloat;
     if(exp->tipo == "int"){
+        ultimoTipo = "int";
+        ultimoValorFloat = (int)valor;
         return (int)valor;
     }
-    else if(exp->tipo == "float"){
-        return valor;
+    else if(exp->tipo == "int32"){
+        ultimoTipo = "int";
+        ultimoValorFloat = (int32_t)valor;
+        return (int32_t)valor;
+    }
+    else if(exp->tipo == "uint"){
+        ultimoTipo = "uint";
+        ultimoValorFloat = (unsigned int)valor;
+        return (unsigned int)valor;
+    }
+    else if(exp->tipo == "uint32"){
+        ultimoTipo = "uint";
+        ultimoValorFloat = (uint32_t)valor;
+        return (uint32_t)valor;
+    }
+    else if(exp->tipo == "float" || exp->tipo == "float32"){
+        ultimoTipo = "float";
+        ultimoValorFloat = valor;
+        return (int)valor;
     }
     else if(exp->tipo == "bool"){
+        ultimoTipo = "bool";
+        ultimoValorFloat = (valor !=0) ? 1: 0;
         return (valor !=0) ? 1: 0;
     }
     cerr << "Error: cast a tipo '" << exp->tipo << "' no soportado" << endl;
@@ -1271,7 +1324,8 @@ int EVALVisitor::visit(CastExp* exp) {
 
 
 int EVALVisitor::visit(AssignStm* stm) {
-    int valor = stm->e->accept(this);
+    stm->e->accept(this);
+    double valor = ultimoValorFloat;
     
     if (variablesLocales.count(stm->id)) {
         variablesLocales[stm->id] = valor;
@@ -1283,8 +1337,13 @@ int EVALVisitor::visit(AssignStm* stm) {
 }
 
 int EVALVisitor::visit(PrintStm* stm) {
-    int valor = stm->e->accept(this);
-    cout << valor << endl;
+    stm->e->accept(this);
+
+    if (ultimoTipo == "float" || ultimoTipo == "float32") {
+        cout << fixed << setprecision(6) << ultimoValorFloat << endl;
+    } else {
+        cout << (long long)ultimoValorFloat << endl;
+    }
     return 0;
 }
 int EVALVisitor::visit(IfStm* stm) {
@@ -1311,21 +1370,23 @@ int EVALVisitor::visit(WhileStm* stm) {
 int EVALVisitor::visit(VarDec* vd) {
     for (const auto& var : vd->vars) {
         if (scopeDepth > 0) {
-            // We're in a local scope (inside a Body)
+
             variablesLocales[var] = 0;
+            tiposVariablesLocales[var] = vd->type;
         } else {
-            // We're in global scope
+
             variablesGlobales[var] = 0;
+            tiposVariablesGlobales[var] = vd->type;
         }
     }
     
     return 0;
 }
 int EVALVisitor::visit(Body* b) {
-    // Save current local variables
-    unordered_map<string, int> savedLocals = variablesLocales;
+
+    unordered_map<string, double> savedLocals = variablesLocales;
     
-    // Enter new scope
+
     scopeDepth++;
     
     for (auto dec : b->declarations) {
@@ -1338,7 +1399,7 @@ int EVALVisitor::visit(Body* b) {
         if (hayRetorno) break;
     }
     
-    // Exit scope and restore previous local variables
+ 
     scopeDepth--;
     variablesLocales = savedLocals;
     
@@ -1346,14 +1407,19 @@ int EVALVisitor::visit(Body* b) {
 }
 int EVALVisitor::visit(ReturnStm* stm) {
     if (stm->e) {
-        valorRetorno = stm->e->accept(this);
+
+        stm->e->accept(this);
+
+        valorRetorno = ultimoValorFloat;
     } else {
-        valorRetorno = 0;
+        valorRetorno = 0.0;
+        ultimoValorFloat = 0.0;
+        ultimoTipo = "int";
     }
     
     hayRetorno = true;
     
-    return valorRetorno;
+    return (int)valorRetorno;  
 }
 int EVALVisitor::visit(FunDec* fd) {
     tablaDeFunciones[fd->nombre] = fd;
@@ -1367,35 +1433,45 @@ int EVALVisitor::visit(FcallExp* fcall) {
     
     FunDec* funcion = tablaDeFunciones[fcall->nombre];
     
-    // Evaluar argumentos en el contexto actual
-    vector<int> valoresArgs;
+
+    vector<double> valoresArgs;
     for (size_t i = 0; i < fcall->argumentos.size(); i++) {
-        valoresArgs.push_back(fcall->argumentos[i]->accept(this));
+
+        fcall->argumentos[i]->accept(this);
+
+        valoresArgs.push_back(ultimoValorFloat);
     }
     
-    // Guardar variables locales anteriores
-    unordered_map<string, int> variablesAnteriores = variablesLocales;
+
+    unordered_map<string, double> variablesAnteriores = variablesLocales;
+    unordered_map<string, string> tiposAnteriores = tiposVariablesLocales;
     variablesLocales.clear();
+    tiposVariablesLocales.clear();
     
-    // Agregar parámetros con sus valores evaluados
     for (size_t i = 0; i < valoresArgs.size(); i++) {
         if (i < funcion->Pnombres.size()) {
             variablesLocales[funcion->Pnombres[i]] = valoresArgs[i];
+
         }
     }
-    
-    // Entrar en nuevo scope
+
     scopeDepth++;
     hayRetorno = false;
     funcion->cuerpo->accept(this);
     scopeDepth--;
     
-    int resultado = valorRetorno;
-    
+    double resultado = valorRetorno;
+
     variablesLocales = variablesAnteriores;
+    tiposVariablesLocales = tiposAnteriores;
     hayRetorno = false;
     
-    return resultado;
+
+    ultimoValorFloat = resultado;
+
+    ultimoTipo = "float";  
+    
+    return (int)resultado;  
 }
 
 int EVALVisitor::visit(FcallStm* stm) {
@@ -1406,36 +1482,41 @@ int EVALVisitor::visit(FcallStm* stm) {
     
     FunDec* funcion = tablaDeFunciones[stm->nombre];
     
-    // Evaluar argumentos en el contexto actual
-    vector<int> valoresArgs;
+    // Evaluar argumentos
+    vector<double> valoresArgs;
     for (size_t i = 0; i < stm->argumentos.size(); i++) {
-        valoresArgs.push_back(stm->argumentos[i]->accept(this));
+        stm->argumentos[i]->accept(this);
+        valoresArgs.push_back(ultimoValorFloat);
     }
     
-    // Guardar variables locales anteriores
-    unordered_map<string, int> variablesAnteriores = variablesLocales;
+    // Guardar contexto anterior
+    unordered_map<string, double> variablesAnteriores = variablesLocales;
+    unordered_map<string, string> tiposAnteriores = tiposVariablesLocales;
     variablesLocales.clear();
+    tiposVariablesLocales.clear();
     
-    // Agregar parámetros con sus valores evaluados
+    // Pasar parámetros
     for (size_t i = 0; i < valoresArgs.size(); i++) {
         if (i < funcion->Pnombres.size()) {
             variablesLocales[funcion->Pnombres[i]] = valoresArgs[i];
+            // tiposVariablesLocales[funcion->Pnombres[i]] = funcion->Ptipos[i];
         }
     }
     
-    // Entrar en nuevo scope
     scopeDepth++;
     hayRetorno = false;
     funcion->cuerpo->accept(this);
     scopeDepth--;
     
-    int resultado = valorRetorno;
-    
+    // Restaurar contexto
     variablesLocales = variablesAnteriores;
+    tiposVariablesLocales = tiposAnteriores;
     hayRetorno = false;
     
-    return resultado;
+    // No usamos el valor de retorno, así que no hace falta tocar ultimoValorFloat
+    return 0;
 }
+
 
 int EVALVisitor::visit(Program* p) {
     for (auto vd : p->vdlist) {

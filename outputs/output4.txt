@@ -2,20 +2,24 @@
 Parseo exitoso
 
 === Iniciando impresión del programa ===
-var contador: int
-var resultado: float
-var suma: int
-contador=0
-while false: 
-  contador=contador + 1
-  echo(contador)
-echo(contador)
-suma=5 + 10 + 15
+var x: int
+x=0
 if true: 
-  suma=suma * 2
-  echo(suma)
-resultado=10 + 5 * 2 - 8
-echo(resultado)
+  x=100
+  echo(x)
+else: 
+  x=200
+  echo(x)
+if 10 > 5: 
+  x=x + 50
+  echo(x)
+else: 
+  x=x - 50
+  echo(x)
+if 3.5 >= 2: 
+  echo(1)
+else: 
+  echo(0)
 
  ===Iniciando chequeo de tipos===
 Revisión exitosa
@@ -25,8 +29,8 @@ Revisión exitosa
 Revisión exitosa
 
  Generando ejecutable 
-0
-60
-22
+100
+150
+1
 
 === STDERR ===

@@ -1,21 +1,20 @@
-var x: int
-x = 0
+proc calcular(a: int, b: int): float =
+    var temp: float
+    temp = if a > b: a.float else: b.float
+    return temp * 1.5
 
-if true:
-    x = 100
-    echo(x)
-else:
-    x = 200
-    echo(x)
+proc seleccionar(x: uint, y: uint): uint =
+    return if x > y: x else: y
 
-if 10 > 5:
-    x = x + 50
-    echo(x)
-else:
-    x = x - 50
-    echo(x)
+var res1: float
+var res2: uint
+var final: float
+res1 = calcular(10, 25)
+echo(res1)
 
-if 3.5 >= 2.0:
-    echo(1)
-else:
-    echo(0)
+res2 = seleccionar(100.uint, 75.uint)
+echo(res2)
+
+
+final = if res2.float > 50.float: res1 + res2.float else: res1
+echo(final)
