@@ -478,7 +478,7 @@ echo(resultado)
 **Salida esperada:**
 ```
 20.000000
-20.000000
+15.000000
 ```
 
 ---
