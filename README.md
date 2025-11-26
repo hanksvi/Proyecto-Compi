@@ -470,10 +470,7 @@ else:
 
 echo(resultado)
 
-resultado = if x.float < 15.float:
-    if y > 25: y.float * 2.float else: y.float
-else:
-    z.float
+resultado = if x.float < 15.float: z.float else: y.float
 
 echo(resultado)
 ```
